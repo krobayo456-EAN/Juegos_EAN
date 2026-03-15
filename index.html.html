@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TechBuild en Crisis — Cadena Critica</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;min-height:100vh;color:#e8f0fb;padding:0}
+
+/* ── PANTALLA SELECCION EQUIPO ── */
+.screen{display:none;padding:20px;max-width:600px;margin:0 auto;min-height:100vh}
+.screen.active{display:block}
+
+/* ── CABECERA ── */
+.top-bar{text-align:center;padding:20px 0 14px}
+.top-bar h1{font-size:20px;font-weight:700;color:#F4A124;letter-spacing:1px}
+.top-bar p{font-size:12px;color:#8aabcc;margin-top:3px}
+
+/* ── TABLERO COMPACTO ── */
+.track-wrap{background:#0f2040;border-radius:14px;padding:14px;border:1px solid #1e3a66;margin-bottom:14px}
+.track-label{font-size:10px;color:#8aabcc;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;text-align:center}
+.track{display:flex;flex-direction:column;gap:5px}
+.step{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;border:1px solid #1e3a66;background:#0d1e3a;transition:all .4s}
+.step.milestone{border-color:#F4A12440;background:#1a2e50}
+.step.active{border-color:#F4A124;background:#1e3352;box-shadow:0 0 0 2px #F4A12430}
+.step.done{border-color:#3B6D1150;background:#0d2010}
+.step-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.step-info{flex:1}
+.step-name{font-size:12px;font-weight:600;color:#c8d8f0}
+.step-desc{font-size:10px;color:#6a8aaa;margin-top:1px}
+.step-here{font-size:10px;font-weight:700;color:#F4A124;flex-shrink:0;background:#1e3352;border:1px solid #F4A124;border-radius:10px;padding:2px 8px}
+
+.finish-row{background:#1a3a1a;border:1px solid #3B6D11;border-radius:10px;padding:10px;text-align:center;margin-top:8px}
+.finish-row span{font-size:13px;font-weight:700;color:#97C459}
+.finish-row p{font-size:10px;color:#6aaa6a;margin-top:2px}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat-pill{background:#0f2040;border:1px solid #1e3a66;border-radius:10px;padding:10px;text-align:center}
+.stat-lbl{font-size:10px;color:#8aabcc;margin-bottom:3px}
+.stat-val{font-size:18px;font-weight:700;color:#F4A124}
+
+/* ── TIMER ── */
+.timer-wrap{margin-bottom:12px}
+.timer-top{display:flex;justify-content:space-between;margin-bottom:4px}
+.timer-lbl{font-size:11px;color:#8aabcc}
+.timer-num{font-size:16px;font-weight:700;color:#F4A124}
+.timer-bar{height:6px;background:#1e3a66;border-radius:3px;overflow:hidden}
+.timer-fill{height:100%;background:#F4A124;transition:width 1s linear;border-radius:3px}
+.timer-fill.red{background:#E24B4A}
+
+/* ── TARJETA PREGUNTA ── */
+.q-card{background:#fff;border-radius:12px;padding:1.2rem;color:#1e293b;margin-bottom:12px}
+.q-badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:10px;letter-spacing:.5px}
+.q-scenario{background:#f0f4fa;border-radius:8px;padding:10px 12px;font-size:13px;color:#334155;line-height:1.6;margin-bottom:12px;border-left:3px solid #F4A124}
+.q-question{font-size:14px;font-weight:700;color:#0D1B3E;margin-bottom:12px}
+.opts{display:grid;gap:8px}
+.opt{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:11px 13px;font-size:13px;color:#1e293b;cursor:pointer;text-align:left;line-height:1.4;transition:all .15s;font-family:inherit;width:100%;display:flex;align-items:flex-start;gap:8px}
+.opt:hover:not(:disabled){background:#e8f0fb;border-color:#378ADD}
+.opt.correct{background:#EAF3DE;border-color:#3B6D11;color:#1a4008;font-weight:600}
+.opt.wrong{background:#FCEBEB;border-color:#A32D2D;color:#5c1010}
+.opt:disabled{cursor:default}
+.opt-letter{min-width:22px;height:22px;border-radius:50%;background:#e2e8f0;color:#64748B;font-size:10px;font-weight:700;text-align:center;line-height:22px;flex-shrink:0}
+.opt.correct .opt-letter{background:#3B6D11;color:#fff}
+.opt.wrong .opt-letter{background:#A32D2D;color:#fff}
+
+.feedback{border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.6;margin-top:10px;display:none}
+.feedback.show{display:block}
+.feedback.good{background:#EAF3DE;border:1px solid #97C459;color:#1a4008}
+.feedback.bad{background:#FCEBEB;border:1px solid #F09595;color:#5c1010}
+
+/* ── RESCUE ── */
+.rescue-header{background:#FAEEDA;border-radius:8px;padding:10px;margin-bottom:12px;text-align:center}
+.rescue-header h3{font-size:13px;font-weight:700;color:#854F0B}
+.rescue-header p{font-size:11px;color:#854F0B;margin-top:3px}
+
+/* ── VICTORIA ── */
+.win-screen{text-align:center;padding:30px 20px}
+.win-icon{font-size:60px;margin-bottom:16px}
+.win-title{font-size:26px;font-weight:700;color:#F4A124;margin-bottom:8px}
+.win-team{font-size:18px;font-weight:700;margin-bottom:6px}
+.win-sub{font-size:14px;color:#8aabcc;margin-bottom:24px;line-height:1.6}
+.win-code-wrap{background:#0f2040;border:2px solid #F4A124;border-radius:14px;padding:20px;margin-bottom:20px}
+.win-code-label{font-size:12px;color:#8aabcc;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px}
+.win-code{font-size:36px;font-weight:700;color:#F4A124;letter-spacing:8px;font-family:'Courier New',monospace}
+.win-code-hint{font-size:12px;color:#6a8aaa;margin-top:8px}
+.win-message{background:#1a3a1a;border:1px solid #3B6D11;border-radius:10px;padding:14px;font-size:13px;color:#c8d8f0;line-height:1.7;text-align:left;margin-bottom:20px}
+.win-message strong{color:#97C459}
+
+/* ── SELECCION DE EQUIPO ── */
+.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.team-btn{background:#0f2040;border:2px solid #1e3a66;border-radius:12px;padding:16px 12px;cursor:pointer;transition:all .2s;text-align:center;font-family:inherit}
+.team-btn:hover{border-color:#378ADD;background:#152a50}
+.team-btn.t1{border-color:#E24B4A20}.team-btn.t1:hover{border-color:#E24B4A;background:#2a0d0d}
+.team-btn.t2{border-color:#378ADD20}.team-btn.t2:hover{border-color:#378ADD;background:#0d1e3a}
+.team-btn.t3{border-color:#639922 20}.team-btn.t3:hover{border-color:#639922;background:#0d2010}
+.team-btn.t4{border-color:#BA751720}.team-btn.t4:hover{border-color:#BA7517;background:#2a1a00}
+.team-btn.t5{border-color:#534AB720}.team-btn.t5:hover{border-color:#534AB7;background:#1a1040}
+.team-btn.t6{border-color:#028090 20}.team-btn.t6:hover{border-color:#028090;background:#001a1e}
+.team-btn.t7{border-color:#D4537E20}.team-btn.t7:hover{border-color:#D4537E;background:#2a0d1a}
+.team-icon{font-size:24px;margin-bottom:6px}
+.team-name-btn{font-size:14px;font-weight:700;margin-bottom:3px}
+.team-role-btn{font-size:11px;color:#8aabcc}
+
+/* ── BOTONES ── */
+.btn-main{display:block;width:100%;background:#F4A124;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:700;color:#0D1B3E;cursor:pointer;font-family:inherit;margin-top:8px;transition:background .2s}
+.btn-main:hover{background:#e8941a}
+.btn-sec{display:block;width:100%;background:transparent;border:1.5px solid #2a4a8b;border-radius:10px;padding:12px;font-size:13px;color:#B5D4F4;cursor:pointer;font-family:inherit;margin-top:8px}
+.btn-sec:hover{background:#182d56}
+
+/* ── INTRO ── */
+.briefing{background:#182d56;border-radius:12px;padding:14px;border-left:4px solid #E24B4A;margin-bottom:14px}
+.briefing h3{font-size:13px;font-weight:700;color:#F87171;margin-bottom:6px;text-transform:uppercase}
+.briefing p{font-size:13px;color:#c8d8f0;line-height:1.6}
+.rules-box{background:#0f2040;border-radius:12px;padding:14px;border:1px solid #1e3a66;margin-bottom:14px}
+.rules-box h3{font-size:12px;font-weight:700;color:#F4A124;margin-bottom:8px}
+.rules-box li{font-size:12px;color:#c8d8f0;line-height:1.8;margin-left:16px}
+
+.pts-flash{font-size:12px;font-weight:700;color:#97C459;text-align:center;padding:6px;margin-top:6px;display:none}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.pulsing{animation:pulse .8s infinite}
+</style>
+</head>
+<body>
+
+<!-- PANTALLA 1: INTRO -->
+<div id="s-intro" class="screen active">
+  <div class="top-bar">
+    <h1>TECHBUILD EN CRISIS</h1>
+    <p>Cadena Critica &middot; Caps. 17 &middot; 18 &middot; 19</p>
+  </div>
+  <div class="briefing">
+    <h3>Mision urgente</h3>
+    <p>TechBuild S.A. tiene un proyecto retrasado 4 meses. El CEO contrata al mejor equipo consultor. Recorre los 11 pasos del tablero respondiendo correctamente. El <strong style="color:#F4A124">primer equipo en llegar</strong> obtiene un codigo de victoria secreto para reclamar el contrato.</p>
+  </div>
+  <div class="rules-box">
+    <h3>Reglas del tablero</h3>
+    <ul>
+      <li>Respuesta correcta = avanzas 2-3 pasos</li>
+      <li>Respuesta incorrecta = pregunta de rescate</li>
+      <li>Rescate correcto = avanzas 1 paso</li>
+      <li>Rescate incorrecto = te quedas donde estas</li>
+      <li>Cada equipo juega en su propio dispositivo</li>
+      <li>El que llega al paso 11 primero gana</li>
+    </ul>
+  </div>
+  <button class="btn-main" onclick="goScreen('s-teamselect')">ELEGIR EQUIPO Y COMENZAR</button>
+</div>
+
+<!-- PANTALLA 2: SELECCION DE EQUIPO -->
+<div id="s-teamselect" class="screen">
+  <div class="top-bar">
+    <h1>ELEGIR EQUIPO</h1>
+    <p>Selecciona el equipo asignado por el profesor</p>
+  </div>
+  <div class="team-grid">
+    <button class="team-btn t1" onclick="selectTeam(1)">
+      <div class="team-icon">&#128270;</div>
+      <div class="team-name-btn" style="color:#E24B4A">Equipo 1</div>
+      <div class="team-role-btn">Los Detectives</div>
+    </button>
+    <button class="team-btn t2" onclick="selectTeam(2)">
+      <div class="team-icon">&#128736;</div>
+      <div class="team-name-btn" style="color:#378ADD">Equipo 2</div>
+      <div class="team-role-btn">Los Ingenieros</div>
+    </button>
+    <button class="team-btn t3" onclick="selectTeam(3)">
+      <div class="team-icon">&#128200;</div>
+      <div class="team-name-btn" style="color:#639922">Equipo 3</div>
+      <div class="team-role-btn">Los Analistas</div>
+    </button>
+    <button class="team-btn t4" onclick="selectTeam(4)">
+      <div class="team-icon">&#129309;</div>
+      <div class="team-name-btn" style="color:#BA7517">Equipo 4</div>
+      <div class="team-role-btn">Los Negociadores</div>
+    </button>
+    <button class="team-btn t5" onclick="selectTeam(5)">
+      <div class="team-icon">&#128202;</div>
+      <div class="team-name-btn" style="color:#7F77DD">Equipo 5</div>
+      <div class="team-role-btn">Los Estrategas</div>
+    </button>
+    <button class="team-btn t6" onclick="selectTeam(6)">
+      <div class="team-icon">&#127759;</div>
+      <div class="team-name-btn" style="color:#1D9E75">Equipo 6</div>
+      <div class="team-role-btn">Los Consultores</div>
+    </button>
+    <button class="team-btn t7" onclick="selectTeam(7)">
+      <div class="team-icon">&#127942;</div>
+      <div class="team-name-btn" style="color:#D4537E">Equipo 7</div>
+      <div class="team-role-btn">Los Lideres</div>
+    </button>
+  </div>
+</div>
+
+<!-- PANTALLA 3: JUEGO -->
+<div id="s-game" class="screen">
+  <div class="top-bar">
+    <h1 id="g-teamname">Equipo 1</h1>
+    <p id="g-teamrole">Los Detectives</p>
+  </div>
+  <div class="stats-row">
+    <div class="stat-pill"><div class="stat-lbl">Paso actual</div><div class="stat-val" id="g-pos">0</div></div>
+    <div class="stat-pill"><div class="stat-lbl">Puntos</div><div class="stat-val" id="g-pts">0</div></div>
+    <div class="stat-pill"><div class="stat-lbl">Meta</div><div class="stat-val">11</div></div>
+  </div>
+  <div class="track-wrap">
+    <div class="track-label">Tu posicion en el tablero</div>
+    <div class="track" id="track"></div>
+    <div class="finish-row"><span>Meta: Empresa salvada</span><p>El primero en llegar gana el contrato</p></div>
+  </div>
+  <div id="q-area"></div>
+</div>
+
+<!-- PANTALLA 4: VICTORIA -->
+<div id="s-win" class="screen">
+  <div class="win-screen">
+    <div class="win-icon">&#11088;</div>
+    <div class="win-title">MISION CUMPLIDA</div>
+    <div class="win-team" id="win-teamname" style="color:#F4A124"></div>
+    <div class="win-sub">Completaron el tablero de Cadena Critica.<br>Muestren este codigo al profesor para reclamar la victoria.</div>
+    <div class="win-code-wrap">
+      <div class="win-code-label">Codigo de victoria</div>
+      <div class="win-code" id="win-code">---</div>
+      <div class="win-code-hint">Anoten este codigo — es unico para su equipo</div>
+    </div>
+    <div class="win-message" id="win-message"></div>
+    <button class="btn-sec" onclick="goScreen('s-game')">Ver mi tablero final</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// DATOS
+// ════════════════════════════════════════
+
+var TEAMS = {
+  1:{name:'Equipo 1',role:'Los Detectives',color:'#E24B4A',code:'CC-DET-4821'},
+  2:{name:'Equipo 2',role:'Los Ingenieros',color:'#378ADD',code:'CC-ING-7263'},
+  3:{name:'Equipo 3',role:'Los Analistas',color:'#639922',code:'CC-ANL-5594'},
+  4:{name:'Equipo 4',role:'Los Negociadores',color:'#BA7517',code:'CC-NEG-3317'},
+  5:{name:'Equipo 5',role:'Los Estrategas',color:'#7F77DD',code:'CC-EST-8802'},
+  6:{name:'Equipo 6',role:'Los Consultores',color:'#1D9E75',code:'CC-CON-6641'},
+  7:{name:'Equipo 7',role:'Los Lideres',color:'#D4537E',code:'CC-LID-9150'}
+};
+
+var STEPS = [
+  {id:0,name:'Punto de partida',desc:'TechBuild convoca consultores',icon:'◉',type:'start'},
+  {id:1,name:'Analisis inicial',desc:'El CEO presenta los reportes',icon:'1',type:'normal'},
+  {id:2,name:'Sala de guerra',desc:'Primer diagnostico del equipo',icon:'2',type:'normal'},
+  {id:3,name:'Checkpoint: Buffer',desc:'Concepto clave verificado',icon:'★',type:'milestone'},
+  {id:4,name:'Negociacion interna',desc:'El equipo alinea estrategia',icon:'4',type:'normal'},
+  {id:5,name:'Reunion de proveedores',desc:'Enfrentamiento con subcontratistas',icon:'5',type:'normal'},
+  {id:6,name:'Checkpoint: Costos',desc:'Impacto financiero calculado',icon:'★',type:'milestone'},
+  {id:7,name:'Propuesta al CEO',desc:'Se presenta el plan de rescate',icon:'7',type:'normal'},
+  {id:8,name:'Prueba de fuego',desc:'La junta directiva evalua',icon:'8',type:'normal'},
+  {id:9,name:'Checkpoint: Sistema',desc:'Modelo multi-proyecto aprobado',icon:'★',type:'milestone'},
+  {id:10,name:'Implementacion',desc:'El metodo entra en produccion',icon:'10',type:'normal'},
+  {id:11,name:'META — Empresa salvada',desc:'Contrato firmado',icon:'★',type:'final'}
+];
+
+var QUESTIONS = [
+  {
+    id:'q1',cap:'Cap. 17',type:'detective',advance:2,rescueAdvance:1,
+    badge:'Reto Detective',badgeColor:'#A32D2D',badgeBg:'#FCEBEB',
+    scenario:'Fred reporta todos los dias: <em>"Vamos al 65% completado."</em> Tres semanas despues el proyecto termina con 6 semanas de retraso. El CEO exige saber como es posible si los reportes decian que todo iba bien.',
+    question:'¿Cual fue el error fatal en el sistema de seguimiento?',
+    opts:[
+      {l:'A',t:'Los reportes no eran suficientemente frecuentes'},
+      {l:'B',t:'Median trabajo completado, no tiempo restante en el buffer'},
+      {l:'C',t:'No usaban grafico PERT actualizado diariamente'},
+      {l:'D',t:'Mark no visitaba al equipo en campo'}
+    ],
+    correct:'B',
+    ok:'Exacto. La pregunta correcta es: ¿cuantos dias faltan para pasar la tarea? No el porcentaje hecho. El buffer es el unico indicador que dice la verdad.',
+    bad:'El porcentaje completado no revela si se llegara a tiempo. Solo el tiempo restante en el buffer dice la verdad sobre el estado real del proyecto.'
+  },
+  {
+    id:'q2',cap:'Cap. 17',type:'escape',advance:2,rescueAdvance:1,
+    badge:'Sala de Escape',badgeColor:'#534AB7',badgeBg:'#EEEDFE',
+    scenario:'El buffer del proyecto A226 inicio con 9 semanas. Hoy, tres semanas despues de implementar el metodo, Fred pregunta que debe reportarle al CEO como indicador de salud del proyecto.',
+    question:'¿Cual es el indicador correcto segun el Cap. 17?',
+    opts:[
+      {l:'A',t:'Porcentaje de tareas completadas vs el total del proyecto'},
+      {l:'B',t:'Dias de retraso acumulados en etapas individuales'},
+      {l:'C',t:'Semanas restantes en el buffer vs las semanas al inicio'},
+      {l:'D',t:'Numero de tareas marcadas en rojo en el grafico PERT'}
+    ],
+    correct:'C',
+    ok:'Correcto. Si el buffer empezo en 9 semanas y sigue en 9, el proyecto va bien — los avances compensaron exactamente los retrasos. Eso es lo unico que importa.',
+    bad:'El buffer integra toda la variabilidad del proyecto. Mientras no se consuma mas rapido que el avance, el proyecto esta protegido — aunque haya etapas individuales con retrasos.'
+  },
+  {
+    id:'q3',cap:'Cap. 18',type:'shark',advance:2,rescueAdvance:1,
+    badge:'Shark Tank',badgeColor:'#854F0B',badgeBg:'#FAEEDA',
+    scenario:'Un proveedor critico necesita 8 semanas para entregar. Cada semana de retraso le cuesta a TechBuild $300.000 en ventas perdidas. TechBuild quiere entrega en 5 semanas y el proveedor pide un incentivo.',
+    question:'¿Hasta cuanto es racional pagar de mas segun el Cap. 18?',
+    opts:[
+      {l:'A',t:'Nada — jamas se paga mas del precio cotizado a un proveedor'},
+      {l:'B',t:'Hasta $900.000 adicionales (3 semanas x $300K recuperadas)'},
+      {l:'C',t:'Exactamente $300.000, el costo de una sola semana'},
+      {l:'D',t:'Lo que sea sin calcular — el tiempo siempre vale mas que el dinero'}
+    ],
+    correct:'B',
+    ok:'Perfecto. 3 semanas ahorradas x $300K = $900K de dano evitado. Cualquier pago menor a eso es rentable. El lenguaje financiero es lo que convence al CEO y al proveedor.',
+    bad:'El calculo: semanas ahorradas x costo por semana. 3 x $300K = $900K. Ese es el maximo racional. Pagar cualquier suma menor a esa es siempre una buena inversion.'
+  },
+  {
+    id:'q4',cap:'Cap. 18',type:'escape',advance:2,rescueAdvance:1,
+    badge:'Sala de Escape',badgeColor:'#534AB7',badgeBg:'#EEEDFE',
+    scenario:'Roger exige al subcontratista: <em>"Firma que entregas el 15 de marzo o no hay trato."</em> El proveedor corta la llamada. Roger regresa furioso diciendo que es imposible negociar con ellos.',
+    question:'¿Cual es la estrategia correcta del Cap. 18 para este caso?',
+    opts:[
+      {l:'A',t:'Buscar otro proveedor que acepte fechas fijas sin cuestionar'},
+      {l:'B',t:'Avisos anticipados (10, 3 y 1 dia antes) + pago extra por entrega rapida'},
+      {l:'C',t:'Escalar al CEO para que presione directamente al proveedor'},
+      {l:'D',t:'Aceptar las 8 semanas y reducir el alcance del proyecto'}
+    ],
+    correct:'B',
+    ok:'Correcto. Fecha fija activa el sindrome del estudiante: el proveedor usara todo el tiempo asignado. Avisos anticipados + incentivo economico es exactamente lo que funciona.',
+    bad:'Exigir fecha fija garantiza que el proveedor use hasta el ultimo dia disponible. Sin fecha fija de inicio y con avisos anticipados, el proveedor puede planificar — y el incentivo hace que entregar rapido sea rentable.'
+  },
+  {
+    id:'q5',cap:'Cap. 19',type:'shark',advance:3,rescueAdvance:1,
+    badge:'Decision Ejecutiva',badgeColor:'#085041',badgeBg:'#E1F5EE',
+    scenario:'TechBuild tiene 5 proyectos simultaneos. El Departamento de Arquitectura de Software participa en todos y siempre esta saturado. Cada equipo reclama maxima prioridad. Resultado: ningun proyecto avanza bien.',
+    question:'¿Cual es el diagnostico correcto segun el Cap. 19?',
+    opts:[
+      {l:'A',t:'Contratar mas personas en Arquitectura para absorber toda la demanda'},
+      {l:'B',t:'Arquitectura es el cuello de botella global del portafolio — gestionarlo como restriccion compartida'},
+      {l:'C',t:'Dar independencia total a cada proyecto con su propio equipo de arquitectura'},
+      {l:'D',t:'Cancelar 3 de los 5 proyectos para reducir la carga total del departamento'}
+    ],
+    correct:'B',
+    ok:'Exacto. Gestionar proyectos de forma independiente cuando comparten un recurso critico ignora la restriccion global. Hay que tratar ese recurso como la limitacion compartida de todo el portafolio.',
+    bad:'Contratar puede ayudar a largo plazo, pero no resuelve la priorizacion entre proyectos. El recurso saturado es la restriccion de TODO el portafolio y debe gestionarse explicitamente como tal.'
+  },
+  {
+    id:'q6',cap:'17-18-19',type:'final',advance:3,rescueAdvance:2,
+    badge:'Reto Final',badgeColor:'#0D1B3E',badgeBg:'#E6F1FB',
+    scenario:'Isaac Levy pide al equipo consultor que explique los 3 cambios fundamentales implementados en Genemodem que produjeron resultados en solo 3 semanas.',
+    question:'¿Cuales son los 3 cambios clave del metodo segun el Cap. 17?',
+    opts:[
+      {l:'A',t:'Mas reuniones de seguimiento, mas reportes y mas control individual por etapas'},
+      {l:'B',t:'Reducir estimaciones al 50%, eliminar fechas por etapa, reportar tiempo restante'},
+      {l:'C',t:'Implementar PMO, usar software avanzado y hacer standups diarios'},
+      {l:'D',t:'Definir penalizaciones por retraso y publicar el ranking de productividad del equipo'}
+    ],
+    correct:'B',
+    ok:'Perfecto. Los 3 cambios son radicalmente contraintuitivos: (1) reducir los plazos a la mitad, (2) eliminar las fechas de terminacion individuales y (3) preguntar cuanto tiempo falta — no cuanto se ha hecho.',
+    bad:'Los 3 cambios reales son contraintuitivos: reducir plazos a la mitad, no dar fechas de terminacion individuales, y preguntar tiempo restante en lugar de porcentaje completado.'
+  }
+];
+
+var RESCUES = {
+  q1:{
+    q:'¿Por que el porcentaje completado es un indicador engañoso en Cadena Critica?',
+    opts:[
+      {l:'A',t:'La gente siempre exagera el avance para quedar bien con el lider'},
+      {l:'B',t:'No captura si el proyecto llegara a tiempo — solo cuanto trabajo hay hecho'},
+      {l:'C',t:'Es dificil de calcular con precision en proyectos complejos'},
+      {l:'D',t:'Depende de la subjetividad de cada miembro del equipo'}
+    ],
+    correct:'B',fb:'El % completado dice cuanto se ha hecho, pero no dice si hay tiempo suficiente para terminar a tiempo. El buffer si captura esa informacion.'
+  },
+  q2:{
+    q:'Si el buffer empezo en 9 semanas y hoy tiene 7, ¿que significa realmente?',
+    opts:[
+      {l:'A',t:'El proyecto va muy mal — perdio 2 semanas de buffer'},
+      {l:'B',t:'El proyecto va bien — aun tiene 7 semanas de colchon disponible'},
+      {l:'C',t:'Hay que activar alarma roja con el CEO de inmediato'},
+      {l:'D',t:'Depende: consumo gradual proporcional al avance es normal; consumo repentino es alarma'}
+    ],
+    correct:'D',fb:'El buffer que se consume gradualmente y en proporcion al avance es señal de proyecto saludable. Solo es alarma si se consume mucho mas rapido que el porcentaje de proyecto completado.'
+  },
+  q3:{
+    q:'¿Por que un retraso de 1 mes puede costar mucho mas de lo que parece a simple vista?',
+    opts:[
+      {l:'A',t:'Por el costo de las horas extra que debe pagar el equipo del proyecto'},
+      {l:'B',t:'Porque parte de las ventas perdidas no se recuperan si la ventana competitiva se cierra'},
+      {l:'C',t:'Por las penalizaciones contractuales pactadas con el cliente final'},
+      {l:'D',t:'Por el deterioro inevitable de la moral del equipo de trabajo'}
+    ],
+    correct:'B',fb:'El dinero no solo se retrasa — parte se pierde definitivamente si un competidor ocupa el espacio de mercado o la oportunidad de venta desaparece.'
+  },
+  q4:{
+    q:'¿Para que sirven exactamente los avisos anticipados al proveedor (10, 3 y 1 dia antes)?',
+    opts:[
+      {l:'A',t:'Para presionarlo psicologicamente con recordatorios constantes del plazo'},
+      {l:'B',t:'Para que pueda planificar su carga sin necesitar una fecha de inicio fija'},
+      {l:'C',t:'Para tener evidencia documental escrita si incumple el contrato'},
+      {l:'D',t:'Para cumplir con los requisitos formales del contrato firmado'}
+    ],
+    correct:'B',fb:'La razon por la que el proveedor pide fecha fija es para poder planificar. Los avisos anticipados le dan exactamente eso, sin el efecto negativo del sindrome del estudiante.'
+  },
+  q5:{
+    q:'Si un recurso compartido es cuello de botella en 5 proyectos, ¿que pasa si cada proyecto lo trata como si fuera suyo?',
+    opts:[
+      {l:'A',t:'El recurso se vuelve mas eficiente gracias a la competencia entre proyectos'},
+      {l:'B',t:'Se crea multitarea forzada que ralentiza todos los proyectos al mismo tiempo'},
+      {l:'C',t:'Los proyectos mas importantes ganan prioridad de forma automatica y natural'},
+      {l:'D',t:'El recurso aprende a trabajar mas rapido y eficientemente bajo presion'}
+    ],
+    correct:'B',fb:'Cuando todos reclaman maxima prioridad, el recurso salta constantemente entre proyectos — multitarea que hace que todos avancen lento en lugar de unos rapido y otros esperando en fila.'
+  },
+  q6:{
+    q:'¿Por que es clave NO asignar fechas de terminacion individuales por etapa?',
+    opts:[
+      {l:'A',t:'Para que el equipo no se estrese innecesariamente con presiones de calendario'},
+      {l:'B',t:'Porque la fecha fija activa el sindrome del estudiante: si hay 2 semanas, se usan las 2 semanas'},
+      {l:'C',t:'Para simplificar la administracion general del proyecto y reducir burocracia'},
+      {l:'D',t:'Porque de todas formas nadie cumple las fechas individuales comprometidas'}
+    ],
+    correct:'B',fb:'La fecha fija por etapa le dice al trabajador exactamente hasta cuando puede esperar para comenzar. Sin ella, la urgencia es real desde el primer dia y el sindrome del estudiante desaparece.'
+  }
+};
+
+// ════════════════════════════════════════
+// ESTADO
+// ════════════════════════════════════════
+
+var G = {
+  teamId: null,
+  pos: 0,
+  pts: 0,
+  qIndex: 0,
+  phase: 'question', // question | rescue | done
+  timer: null,
+  timeLeft: 0,
+  rescueFor: null
+};
+
+var TIME = 50;
+var GOAL = 11;
+
+// ════════════════════════════════════════
+// TABLERO
+// ════════════════════════════════════════
+
+function buildTrack(){
+  var track = document.getElementById('track');
+  if(!track) return;
+  track.innerHTML = '';
+  var display = STEPS.slice(1, STEPS.length-1);
+  display.forEach(function(step){
+    var div = document.createElement('div');
+    var isActive = step.id === G.pos;
+    var isDone = step.id < G.pos;
+    div.className = 'step'+(step.type==='milestone'?' milestone':'')+(isActive?' active':'')+(isDone?' done':'');
+    div.id = 'step-'+step.id;
+    var numBg = step.type==='milestone'?'#3a2a00':'#1e3a66';
+    var numColor = step.type==='milestone'?'#F4A124':'#85B7EB';
+    if(isDone){numBg='#0d2a10';numColor='#97C459';}
+    div.innerHTML =
+      '<div class="step-num" style="background:'+numBg+';color:'+numColor+'">'+
+        (isDone?'&#10003;':step.icon)+
+      '</div>'+
+      '<div class="step-info">'+
+        '<div class="step-name">'+step.name+'</div>'+
+        '<div class="step-desc">'+step.desc+'</div>'+
+      '</div>'+
+      (isActive?'<div class="step-here pulsing">TU ESTAS AQUI</div>':'');
+    track.appendChild(div);
+  });
+  document.getElementById('g-pos').textContent = G.pos;
+  document.getElementById('g-pts').textContent = G.pts;
+}
+
+// ════════════════════════════════════════
+// PREGUNTAS
+// ════════════════════════════════════════
+
+function renderQuestion(){
+  var q = QUESTIONS[G.qIndex % QUESTIONS.length];
+  var area = document.getElementById('q-area');
+  area.innerHTML =
+    '<div class="timer-wrap">'+
+      '<div class="timer-top"><span class="timer-lbl">Tiempo para responder</span><span class="timer-num" id="tc">'+TIME+'</span></div>'+
+      '<div class="timer-bar"><div class="timer-fill" id="tf" style="width:100%"></div></div>'+
+    '</div>'+
+    '<div class="q-card">'+
+      '<span class="q-badge" style="background:'+q.badgeBg+';color:'+q.badgeColor+'">'+q.badge+' &middot; '+q.cap+'</span>'+
+      '<div class="q-scenario">'+q.scenario+'</div>'+
+      '<div class="q-question">'+q.question+'</div>'+
+      '<div class="opts" id="opts">'+
+        q.opts.map(function(o){
+          return '<button class="opt" onclick="pick(\''+o.l+'\')"><span class="opt-letter">'+o.l+'</span>'+o.t+'</button>';
+        }).join('')+
+      '</div>'+
+      '<div class="feedback" id="fb"></div>'+
+      '<div class="pts-flash" id="pf"></div>'+
+    '</div>'+
+    '<div id="nxt"></div>';
+  startTimer();
+}
+
+function renderRescue(){
+  var rq = RESCUES[G.rescueFor];
+  var area = document.getElementById('q-area');
+  area.innerHTML =
+    '<div class="q-card">'+
+      '<div class="rescue-header"><h3>PREGUNTA DE RESCATE</h3><p>Responde bien para avanzar al menos 1 paso</p></div>'+
+      '<div class="q-question">'+rq.q+'</div>'+
+      '<div class="opts" id="rescue-opts">'+
+        rq.opts.map(function(o){
+          return '<button class="opt" onclick="rescuePick(\''+o.l+'\')"><span class="opt-letter">'+o.l+'</span>'+o.t+'</button>';
+        }).join('')+
+      '</div>'+
+      '<div class="feedback" id="rfb"></div>'+
+    '</div>'+
+    '<div id="rnxt"></div>';
+}
+
+// ════════════════════════════════════════
+// LOGICA
+// ════════════════════════════════════════
+
+function startTimer(){
+  G.timeLeft = TIME;
+  clearInterval(G.timer);
+  G.timer = setInterval(function(){
+    G.timeLeft--;
+    var tc = document.getElementById('tc');
+    var tf = document.getElementById('tf');
+    if(tc) tc.textContent = G.timeLeft;
+    if(tf){
+      tf.style.width = Math.round((G.timeLeft/TIME)*100)+'%';
+      if(G.timeLeft <= 12) tf.classList.add('red');
+    }
+    if(G.timeLeft <= 0){ clearInterval(G.timer); timeOut(); }
+  },1000);
+}
+
+function timeOut(){
+  var q = QUESTIONS[G.qIndex % QUESTIONS.length];
+  showCorrect('opts', q.correct);
+  var fb = document.getElementById('fb');
+  if(fb){ fb.classList.add('show','bad'); fb.innerHTML='<strong>Tiempo agotado.</strong> '+q.bad; }
+  var nxt = document.getElementById('nxt');
+  if(nxt) nxt.innerHTML = '<button class="btn-main" onclick="goRescue()">Pregunta de rescate &rarr;</button>';
+}
+
+function showCorrect(containerId, correct){
+  var opts = document.querySelectorAll('#'+containerId+' .opt');
+  var letters = ['A','B','C','D'];
+  opts.forEach(function(o,i){
+    o.disabled = true;
+    if(letters[i] === correct) o.classList.add('correct');
+  });
+}
+
+function pick(letter){
+  clearInterval(G.timer);
+  var q = QUESTIONS[G.qIndex % QUESTIONS.length];
+  var opts = document.querySelectorAll('#opts .opt');
+  var letters = ['A','B','C','D'];
+  opts.forEach(function(o,i){
+    o.disabled = true;
+    if(letters[i]===q.correct) o.classList.add('correct');
+    else if(letters[i]===letter && letter!==q.correct) o.classList.add('wrong');
+  });
+
+  var isOk = letter === q.correct;
+  var fb = document.getElementById('fb');
+  var pf = document.getElementById('pf');
+  var nxt = document.getElementById('nxt');
+
+  if(isOk){
+    var bonus = Math.round((G.timeLeft/TIME)*30);
+    var earned = 100 + bonus;
+    G.pts += earned;
+    var newPos = Math.min(G.pos + q.advance, GOAL);
+    G.pos = newPos;
+    buildTrack();
+    if(fb){ fb.classList.add('show','good'); fb.innerHTML='<strong>Correcto!</strong> +'+earned+' puntos. Avanzas '+q.advance+' pasos. '+q.ok; }
+    if(pf){ pf.style.display='block'; pf.textContent='+'+earned+' puntos — '+q.advance+' pasos adelante'; }
+    if(G.pos >= GOAL){
+      setTimeout(showVictory, 2000);
+    } else {
+      if(nxt) nxt.innerHTML='<button class="btn-main" onclick="nextQ()">Siguiente reto &rarr;</button>';
+    }
+  } else {
+    if(fb){ fb.classList.add('show','bad'); fb.innerHTML='<strong>No exactamente.</strong> '+q.bad; }
+    if(nxt) nxt.innerHTML='<button class="btn-main" onclick="goRescue()">Pregunta de rescate &rarr;</button>';
+  }
+}
+
+function goRescue(){
+  G.rescueFor = QUESTIONS[G.qIndex % QUESTIONS.length].id;
+  renderRescue();
+}
+
+function rescuePick(letter){
+  var rq = RESCUES[G.rescueFor];
+  var opts = document.querySelectorAll('#rescue-opts .opt');
+  var letters = ['A','B','C','D'];
+  opts.forEach(function(o,i){
+    o.disabled = true;
+    if(letters[i]===rq.correct) o.classList.add('correct');
+    else if(letters[i]===letter && letter!==rq.correct) o.classList.add('wrong');
+  });
+
+  var isOk = letter === rq.correct;
+  var rfb = document.getElementById('rfb');
+  var rnxt = document.getElementById('rnxt');
+  var q = QUESTIONS[G.qIndex % QUESTIONS.length];
+
+  if(isOk){
+    G.pts += 40;
+    var newPos = Math.min(G.pos + q.rescueAdvance, GOAL);
+    G.pos = newPos;
+    buildTrack();
+    if(rfb){ rfb.classList.add('show','good'); rfb.innerHTML='<strong>Rescate exitoso!</strong> +40 puntos. Avanzas '+q.rescueAdvance+' paso(s). '+rq.fb; }
+    if(G.pos >= GOAL){ setTimeout(showVictory,2000); return; }
+  } else {
+    if(rfb){ rfb.classList.add('show','bad'); rfb.innerHTML='<strong>Rescate fallido.</strong> Te quedas en el paso '+G.pos+'. '+rq.fb; }
+  }
+  if(rnxt) rnxt.innerHTML='<button class="btn-main" onclick="nextQ()">Continuar &rarr;</button>';
+}
+
+function nextQ(){
+  G.qIndex++;
+  renderQuestion();
+}
+
+function showVictory(){
+  var team = TEAMS[G.teamId];
+  document.getElementById('win-teamname').textContent = team.name + ' — ' + team.role;
+  document.getElementById('win-teamname').style.color = team.color;
+  document.getElementById('win-code').textContent = team.code;
+  document.getElementById('win-message').innerHTML =
+    '<strong>Mensaje de Isaac Levy:</strong> "'+team.name+' demostro dominar la Cadena Critica de principio a fin — desde el diagnostico del buffer hasta la negociacion con proveedores y la gestion de multiples proyectos. TechBuild firma el contrato sin condiciones."<br><br>'+
+    '<strong>Puntuacion final: '+G.pts+' puntos &middot; '+GOAL+' pasos completados</strong>';
+  goScreen('s-win');
+}
+
+// ════════════════════════════════════════
+// NAVEGACION
+// ════════════════════════════════════════
+
+function goScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function selectTeam(id){
+  G.teamId = id;
+  G.pos = 0;
+  G.pts = 0;
+  G.qIndex = 0;
+  var team = TEAMS[id];
+  document.getElementById('g-teamname').textContent = team.name;
+  document.getElementById('g-teamname').style.color = team.color;
+  document.getElementById('g-teamrole').textContent = team.role;
+  buildTrack();
+  renderQuestion();
+  goScreen('s-game');
+}
+</script>
+</body>
+</html>
