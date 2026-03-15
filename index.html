@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TechBuild en Crisis — Cadena Critica</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;min-height:100vh;color:#e8f0fb}
+
+/* ── PANTALLAS ── */
+.screen{display:none;padding:20px;max-width:640px;margin:0 auto;min-height:100vh}
+.screen.active{display:block}
+#s-dashboard{max-width:1100px}
+
+/* ── CABECERA ── */
+.top-bar{text-align:center;padding:16px 0 12px}
+.top-bar h1{font-size:20px;font-weight:700;color:#F4A124;letter-spacing:1px}
+.top-bar p{font-size:12px;color:#8aabcc;margin-top:3px}
+
+/* ── MODO SELECTOR ── */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.mode-btn{background:#0f2040;border:2px solid #1e3a66;border-radius:14px;padding:22px 16px;cursor:pointer;text-align:center;transition:all .2s;font-family:inherit}
+.mode-btn:hover{border-color:#F4A124;background:#1a2e50}
+.mode-icon{font-size:32px;margin-bottom:8px}
+.mode-name{font-size:15px;font-weight:700;color:#e8f0fb;margin-bottom:4px}
+.mode-desc{font-size:11px;color:#8aabcc;line-height:1.4}
+
+/* ── SELECCION EQUIPO ── */
+.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.team-btn{background:#0f2040;border:2px solid #1e3a66;border-radius:12px;padding:14px 10px;cursor:pointer;text-align:center;font-family:inherit;transition:all .2s}
+.team-btn:hover{background:#152a50}
+.team-icon{font-size:22px;margin-bottom:5px}
+.team-name-lbl{font-size:13px;font-weight:700;margin-bottom:2px}
+.team-role-lbl{font-size:10px;color:#8aabcc}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat-pill{background:#0f2040;border:1px solid #1e3a66;border-radius:10px;padding:9px;text-align:center}
+.stat-lbl{font-size:10px;color:#8aabcc;margin-bottom:2px}
+.stat-val{font-size:18px;font-weight:700;color:#F4A124}
+
+/* ── TABLERO ── */
+.track-wrap{background:#0f2040;border-radius:12px;padding:12px;border:1px solid #1e3a66;margin-bottom:12px}
+.track-lbl{font-size:10px;color:#8aabcc;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;text-align:center}
+.track{display:flex;flex-direction:column;gap:4px}
+.step{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:7px;border:1px solid #1e3a66;background:#0d1e3a;transition:all .4s}
+.step.milestone{border-color:#F4A12440;background:#1a2e50}
+.step.active{border-color:#F4A124;background:#1e3352}
+.step.done{border-color:#3B6D1150;background:#0d2010}
+.step-num{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.step-info{flex:1}
+.step-name{font-size:11px;font-weight:600;color:#c8d8f0}
+.step-desc{font-size:9px;color:#6a8aaa;margin-top:1px}
+.step-here{font-size:9px;font-weight:700;color:#F4A124;background:#1e3352;border:1px solid #F4A124;border-radius:8px;padding:1px 6px;flex-shrink:0;animation:blink 1.2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.finish-row{background:#1a3a1a;border:1px solid #3B6D11;border-radius:8px;padding:8px;text-align:center;margin-top:6px}
+.finish-row span{font-size:12px;font-weight:700;color:#97C459}
+
+/* ── TIMER ── */
+.timer-wrap{margin-bottom:10px}
+.timer-top{display:flex;justify-content:space-between;margin-bottom:3px}
+.timer-lbl{font-size:10px;color:#8aabcc}
+.timer-num{font-size:15px;font-weight:700;color:#F4A124}
+.timer-bar{height:5px;background:#1e3a66;border-radius:3px;overflow:hidden}
+.timer-fill{height:100%;background:#F4A124;transition:width 1s linear;border-radius:3px}
+.timer-fill.red{background:#E24B4A}
+
+/* ── TARJETA PREGUNTA ── */
+.q-card{background:#fff;border-radius:12px;padding:1.1rem;color:#1e293b;margin-bottom:10px}
+.q-badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:8px}
+.q-scenario{background:#f0f4fa;border-radius:7px;padding:9px 11px;font-size:12px;color:#334155;line-height:1.6;margin-bottom:10px;border-left:3px solid #F4A124}
+.q-question{font-size:13px;font-weight:700;color:#0D1B3E;margin-bottom:10px}
+.opts{display:grid;gap:7px}
+.opt{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:12px;color:#1e293b;cursor:pointer;text-align:left;line-height:1.4;transition:all .15s;font-family:inherit;width:100%;display:flex;align-items:flex-start;gap:8px}
+.opt:hover:not(:disabled){background:#e8f0fb;border-color:#378ADD}
+.opt.correct{background:#EAF3DE;border-color:#3B6D11;color:#1a4008;font-weight:600}
+.opt.wrong{background:#FCEBEB;border-color:#A32D2D;color:#5c1010}
+.opt:disabled{cursor:default}
+.opt-letter{min-width:22px;height:22px;border-radius:50%;background:#e2e8f0;color:#64748B;font-size:10px;font-weight:700;text-align:center;line-height:22px;flex-shrink:0}
+.opt.correct .opt-letter{background:#3B6D11;color:#fff}
+.opt.wrong .opt-letter{background:#A32D2D;color:#fff}
+.feedback{border-radius:7px;padding:9px 11px;font-size:12px;line-height:1.6;margin-top:8px;display:none}
+.feedback.show{display:block}
+.feedback.good{background:#EAF3DE;border:1px solid #97C459;color:#1a4008}
+.feedback.bad{background:#FCEBEB;border:1px solid #F09595;color:#5c1010}
+.rescue-hdr{background:#FAEEDA;border-radius:7px;padding:8px 10px;margin-bottom:10px;text-align:center}
+.rescue-hdr h3{font-size:12px;font-weight:700;color:#854F0B}
+.rescue-hdr p{font-size:10px;color:#854F0B;margin-top:2px}
+
+/* ── VICTORIA ── */
+.win-screen{text-align:center;padding:24px 16px}
+.win-icon{font-size:54px;margin-bottom:12px}
+.win-title{font-size:22px;font-weight:700;color:#F4A124;margin-bottom:6px}
+.win-team{font-size:16px;font-weight:700;margin-bottom:4px}
+.win-sub{font-size:13px;color:#8aabcc;margin-bottom:20px;line-height:1.6}
+.win-code-wrap{background:#0f2040;border:2px solid #F4A124;border-radius:12px;padding:18px;margin-bottom:16px}
+.win-code-lbl{font-size:11px;color:#8aabcc;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.win-code{font-size:32px;font-weight:700;color:#F4A124;letter-spacing:6px;font-family:'Courier New',monospace}
+.win-code-hint{font-size:11px;color:#6a8aaa;margin-top:6px}
+.win-msg{background:#1a3a1a;border:1px solid #3B6D11;border-radius:8px;padding:12px;font-size:12px;color:#c8d8f0;line-height:1.6;text-align:left;margin-bottom:16px}
+
+/* ── BOTONES ── */
+.btn-main{display:block;width:100%;background:#F4A124;border:none;border-radius:9px;padding:13px;font-size:13px;font-weight:700;color:#0D1B3E;cursor:pointer;font-family:inherit;margin-top:7px}
+.btn-main:hover{background:#e8941a}
+.btn-sec{display:block;width:100%;background:transparent;border:1.5px solid #2a4a8b;border-radius:9px;padding:11px;font-size:12px;color:#B5D4F4;cursor:pointer;font-family:inherit;margin-top:6px}
+.btn-sec:hover{background:#182d56}
+
+/* ── INTRO ── */
+.briefing{background:#182d56;border-radius:10px;padding:12px;border-left:4px solid #E24B4A;margin-bottom:12px}
+.briefing h3{font-size:12px;font-weight:700;color:#F87171;margin-bottom:5px;text-transform:uppercase}
+.briefing p{font-size:12px;color:#c8d8f0;line-height:1.6}
+.rules-box{background:#0f2040;border-radius:10px;padding:12px;border:1px solid #1e3a66;margin-bottom:12px}
+.rules-box h3{font-size:11px;font-weight:700;color:#F4A124;margin-bottom:7px}
+.rules-box li{font-size:11px;color:#c8d8f0;line-height:1.8;margin-left:14px}
+
+/* ── DASHBOARD PROFESOR ── */
+.dash-header{background:#1A3A6B;border-radius:12px;padding:16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.dash-title h2{font-size:20px;font-weight:700;color:#F4A124}
+.dash-title p{font-size:12px;color:#8aabcc;margin-top:3px}
+.dash-live{display:flex;align-items:center;gap:6px;font-size:12px;color:#97C459;font-weight:700}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#97C459;animation:blink 1s infinite}
+
+.teams-grid-dash{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:16px}
+.team-dash-card{background:#0f2040;border:1px solid #1e3a66;border-radius:12px;padding:14px;transition:all .3s}
+.team-dash-card.leading{border-color:#F4A124;background:#1a2e40}
+.team-dash-card.finished{border-color:#3B6D11;background:#0d2010}
+.tdc-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.tdc-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.tdc-name{font-size:13px;font-weight:700;color:#e8f0fb}
+.tdc-role{font-size:10px;color:#8aabcc}
+.tdc-stats{display:flex;gap:8px;margin-bottom:10px}
+.tdc-stat{flex:1;background:#0a1628;border-radius:6px;padding:6px;text-align:center}
+.tdc-stat-lbl{font-size:9px;color:#8aabcc;margin-bottom:2px}
+.tdc-stat-val{font-size:16px;font-weight:700;color:#F4A124}
+.progress-bar-wrap{height:6px;background:#1e3a66;border-radius:3px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:3px;transition:width .8s ease}
+.tdc-step-lbl{font-size:10px;color:#8aabcc;margin-top:5px;text-align:right}
+.tdc-status{font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-top:6px;display:inline-block}
+.status-playing{background:#1e3a66;color:#85B7EB}
+.status-waiting{background:#2a1a00;color:#FAC775}
+.status-finished{background:#1a3a1a;color:#97C459}
+.status-winner{background:#3a2a00;color:#F4A124}
+
+.dash-leaderboard{background:#0f2040;border-radius:12px;padding:14px;border:1px solid #1e3a66;margin-bottom:14px}
+.dash-lb-title{font-size:13px;font-weight:700;color:#F4A124;margin-bottom:10px}
+.lb-row{display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid #1e3a66;transition:all .3s}
+.lb-row:last-child{border-bottom:none}
+.lb-pos{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.lb-name{flex:1;font-size:12px;font-weight:600;color:#e8f0fb}
+.lb-pts{font-size:14px;font-weight:700;color:#F4A124;min-width:60px;text-align:right}
+.lb-step{font-size:10px;color:#8aabcc;min-width:50px;text-align:right}
+
+.dash-reset-row{display:flex;gap:10px;flex-wrap:wrap}
+.btn-dash{background:#F4A124;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;color:#0D1B3E;cursor:pointer;font-family:inherit}
+.btn-dash:hover{background:#e8941a}
+.btn-dash-sec{background:transparent;border:1.5px solid #2a4a8b;border-radius:8px;padding:10px 20px;font-size:12px;color:#B5D4F4;cursor:pointer;font-family:inherit}
+.btn-dash-sec:hover{background:#182d56}
+
+.no-data{text-align:center;padding:30px;color:#6a8aaa;font-size:13px}
+.sync-badge{font-size:10px;color:#8aabcc;text-align:center;margin-top:8px}
+
+/* TOOLTIP GANADOR */
+.winner-banner{background:#3a2a00;border:2px solid #F4A124;border-radius:10px;padding:12px 16px;margin-bottom:14px;text-align:center;display:none}
+.winner-banner.show{display:block}
+.winner-banner h3{font-size:16px;font-weight:700;color:#F4A124;margin-bottom:4px}
+.winner-banner p{font-size:12px;color:#FAC775}
+
+@media(max-width:560px){
+  .mode-grid{grid-template-columns:1fr}
+  .team-grid{grid-template-columns:1fr}
+  .teams-grid-dash{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ MODO SELECTOR ══ -->
+<div id="s-mode" class="screen active">
+  <div class="top-bar">
+    <h1>TECHBUILD EN CRISIS</h1>
+    <p>Cadena Critica &middot; Caps. 17 &middot; 18 &middot; 19</p>
+  </div>
+  <div class="mode-grid">
+    <button class="mode-btn" onclick="goScreen('s-intro')">
+      <div class="mode-icon">&#127918;</div>
+      <div class="mode-name">Soy jugador</div>
+      <div class="mode-desc">Selecciona tu equipo y comienza a jugar en tu dispositivo</div>
+    </button>
+    <button class="mode-btn" onclick="initDashboard()">
+      <div class="mode-icon">&#128202;</div>
+      <div class="mode-name">Soy el profesor</div>
+      <div class="mode-desc">Ver el progreso de todos los equipos en tiempo real</div>
+    </button>
+  </div>
+  <div style="background:#182d56;border-radius:10px;padding:12px;border-left:3px solid #F4A124;font-size:11px;color:#c8d8f0;line-height:1.6">
+    <strong style="color:#F4A124">Para el profesor:</strong> Abre esta pagina en la pantalla grande y selecciona "Soy el profesor". Los equipos abren la misma URL en sus celulares y seleccionan "Soy jugador".
+  </div>
+</div>
+
+<!-- ══ INTRO JUGADOR ══ -->
+<div id="s-intro" class="screen">
+  <div class="top-bar">
+    <h1>TECHBUILD EN CRISIS</h1>
+    <p>Cadena Critica &middot; Caps. 17 &middot; 18 &middot; 19</p>
+  </div>
+  <div class="briefing">
+    <h3>Mision urgente</h3>
+    <p>TechBuild S.A. tiene un proyecto retrasado 4 meses. El CEO contrata al mejor equipo consultor. Recorre los 11 pasos respondiendo correctamente. El <strong style="color:#F4A124">primer equipo en llegar</strong> gana el contrato.</p>
+  </div>
+  <div class="rules-box">
+    <h3>Reglas</h3>
+    <ul>
+      <li>Respuesta correcta = avanzas 2-3 pasos</li>
+      <li>Respuesta incorrecta = pregunta de rescate</li>
+      <li>Rescate correcto = avanzas 1 paso, no retrocedes</li>
+      <li>Rescate incorrecto = te quedas donde estas</li>
+      <li>El profesor ve el progreso de todos en vivo</li>
+    </ul>
+  </div>
+  <button class="btn-main" onclick="goScreen('s-teamselect')">ELEGIR MI EQUIPO</button>
+</div>
+
+<!-- ══ SELECCION EQUIPO ══ -->
+<div id="s-teamselect" class="screen">
+  <div class="top-bar">
+    <h1>ELEGIR EQUIPO</h1>
+    <p>Selecciona el equipo asignado por el profesor</p>
+  </div>
+  <div class="team-grid" id="team-grid"></div>
+</div>
+
+<!-- ══ JUEGO ══ -->
+<div id="s-game" class="screen">
+  <div class="top-bar">
+    <h1 id="g-teamname">Equipo 1</h1>
+    <p id="g-teamrole">Los Detectives</p>
+  </div>
+  <div class="stats-row">
+    <div class="stat-pill"><div class="stat-lbl">Paso actual</div><div class="stat-val" id="g-pos">0</div></div>
+    <div class="stat-pill"><div class="stat-lbl">Puntos</div><div class="stat-val" id="g-pts">0</div></div>
+    <div class="stat-pill"><div class="stat-lbl">Meta</div><div class="stat-val">11</div></div>
+  </div>
+  <div class="track-wrap">
+    <div class="track-lbl">Tu posicion en el tablero</div>
+    <div class="track" id="track"></div>
+    <div class="finish-row"><span>&#9733; Meta: Empresa salvada</span></div>
+  </div>
+  <div id="q-area"></div>
+</div>
+
+<!-- ══ VICTORIA ══ -->
+<div id="s-win" class="screen">
+  <div class="win-screen">
+    <div class="win-icon">&#11088;</div>
+    <div class="win-title">MISION CUMPLIDA</div>
+    <div class="win-team" id="win-teamname"></div>
+    <div class="win-sub">Completaron el tablero.<br>Muestren este codigo al profesor.</div>
+    <div class="win-code-wrap">
+      <div class="win-code-lbl">CODIGO DE VICTORIA</div>
+      <div class="win-code" id="win-code">---</div>
+      <div class="win-code-hint">Anoten este codigo</div>
+    </div>
+    <div class="win-msg" id="win-msg"></div>
+    <button class="btn-sec" onclick="goScreen('s-game')">Ver mi tablero final</button>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD PROFESOR ══ -->
+<div id="s-dashboard" class="screen">
+  <div class="dash-header">
+    <div class="dash-title">
+      <h2>Panel del Profesor</h2>
+      <p>TechBuild en Crisis &mdash; Progreso en tiempo real</p>
+    </div>
+    <div>
+      <div class="dash-live"><div class="live-dot"></div>Sincronizando en vivo</div>
+      <div class="sync-badge" id="last-sync">Ultima actualizacion: --</div>
+    </div>
+  </div>
+  <div class="winner-banner" id="winner-banner">
+    <h3 id="winner-name">&#9733; Ganador: Equipo 1</h3>
+    <p id="winner-detail">Llegaron primero a la meta</p>
+  </div>
+  <div class="teams-grid-dash" id="teams-grid-dash"></div>
+  <div class="dash-leaderboard">
+    <div class="dash-lb-title">&#127942; Clasificacion en tiempo real</div>
+    <div id="leaderboard"></div>
+  </div>
+  <div class="dash-reset-row">
+    <button class="btn-dash" onclick="resetAllTeams()">Reiniciar todos los equipos</button>
+    <button class="btn-dash-sec" onclick="goScreen('s-mode')">Volver al inicio</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-database-compat.js"></script>
+<script>
+// ════════════════════════════════════════
+// FIREBASE CONFIG
+// ════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyDemo_CadenaCritica_EAN_2026",
+  authDomain: "cadena-critica-ean.firebaseapp.com",
+  databaseURL: "https://cadena-critica-ean-default-rtdb.firebaseio.com",
+  projectId: "cadena-critica-ean",
+  storageBucket: "cadena-critica-ean.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef123456"
+};
+
+// ════════════════════════════════════════
+// DATOS
+// ════════════════════════════════════════
+var TEAMS = {
+  1:{name:'Equipo 1',role:'Los Detectives',color:'#E24B4A',code:'CC-DET-4821'},
+  2:{name:'Equipo 2',role:'Los Ingenieros',color:'#378ADD',code:'CC-ING-7263'},
+  3:{name:'Equipo 3',role:'Los Analistas',color:'#639922',code:'CC-ANL-5594'},
+  4:{name:'Equipo 4',role:'Los Negociadores',color:'#BA7517',code:'CC-NEG-3317'},
+  5:{name:'Equipo 5',role:'Los Estrategas',color:'#7F77DD',code:'CC-EST-8802'},
+  6:{name:'Equipo 6',role:'Los Consultores',color:'#1D9E75',code:'CC-CON-6641'},
+  7:{name:'Equipo 7',role:'Los Lideres',color:'#D4537E',code:'CC-LID-9150'}
+};
+
+var TEAM_ICONS = {1:'&#128270;',2:'&#128736;',3:'&#128200;',4:'&#129309;',5:'&#128202;',6:'&#127759;',7:'&#127942;'};
+
+var STEPS = [
+  {id:0,name:'Punto de partida',desc:'TechBuild convoca consultores',icon:'&#9711;',type:'start'},
+  {id:1,name:'Analisis inicial',desc:'El CEO presenta los reportes',icon:'1',type:'normal'},
+  {id:2,name:'Sala de guerra',desc:'Primer diagnostico del equipo',icon:'2',type:'normal'},
+  {id:3,name:'Checkpoint: Buffer',desc:'Concepto clave verificado',icon:'&#9733;',type:'milestone'},
+  {id:4,name:'Negociacion interna',desc:'El equipo alinea estrategia',icon:'4',type:'normal'},
+  {id:5,name:'Reunion proveedores',desc:'Enfrentamiento con externos',icon:'5',type:'normal'},
+  {id:6,name:'Checkpoint: Costos',desc:'Impacto financiero calculado',icon:'&#9733;',type:'milestone'},
+  {id:7,name:'Propuesta al CEO',desc:'Se presenta el plan de rescate',icon:'7',type:'normal'},
+  {id:8,name:'Prueba de fuego',desc:'La junta directiva evalua',icon:'8',type:'normal'},
+  {id:9,name:'Checkpoint: Sistema',desc:'Modelo multi-proyecto aprobado',icon:'&#9733;',type:'milestone'},
+  {id:10,name:'Implementacion',desc:'El metodo entra en produccion',icon:'10',type:'normal'},
+  {id:11,name:'META — Empresa salvada',desc:'Contrato firmado',icon:'&#9733;',type:'final'}
+];
+
+// PREGUNTAS CON RESPUESTAS CORRECTAS ALTERNADAS: A, C, D, B, A, C
+var QUESTIONS = [
+  {
+    id:'q1',cap:'Cap. 17',advance:2,rescueAdvance:1,
+    badge:'Reto Detective',badgeColor:'#A32D2D',badgeBg:'#FCEBEB',
+    scenario:'Fred reporta diario: <em>"Vamos al 65% completado."</em> Tres semanas despues el proyecto termina con 6 semanas de retraso. El CEO exige saber como es posible si los reportes decian que todo iba bien.',
+    question:'¿Cual fue el error fatal en el sistema de seguimiento?',
+    opts:[
+      {l:'A',t:'Median trabajo completado, no tiempo restante en el buffer'},
+      {l:'B',t:'Los reportes no eran frecuentes'},
+      {l:'C',t:'No usaban grafico PERT'},
+      {l:'D',t:'Mark no visitaba al equipo en campo'}
+    ],
+    correct:'A',
+    ok:'Exacto. La pregunta correcta es: ¿cuantos dias faltan para pasar la tarea? No el porcentaje hecho. El buffer es el unico indicador real.',
+    bad:'El porcentaje completado no revela si se llegara a tiempo. Solo el tiempo restante en el buffer dice la verdad.'
+  },
+  {
+    id:'q2',cap:'Cap. 17',advance:2,rescueAdvance:1,
+    badge:'Sala de Escape',badgeColor:'#534AB7',badgeBg:'#EEEDFE',
+    scenario:'El buffer del proyecto A226 inicio con 9 semanas. Tres semanas despues de implementar el metodo, Fred debe reportarle al CEO el estado del proyecto.',
+    question:'¿Cual es el indicador correcto de salud del proyecto?',
+    opts:[
+      {l:'A',t:'Porcentaje de tareas completadas vs total'},
+      {l:'B',t:'Dias de retraso acumulados en etapas'},
+      {l:'C',t:'Semanas restantes en el buffer vs semanas al inicio'},
+      {l:'D',t:'Numero de tareas en rojo en el PERT'}
+    ],
+    correct:'C',
+    ok:'Correcto. Si el buffer empezo en 9 semanas y sigue en 9, el proyecto va bien — los avances compensaron exactamente los retrasos.',
+    bad:'El buffer integra toda la variabilidad del proyecto. Mientras no se consuma mas rapido que el avance, el proyecto esta protegido.'
+  },
+  {
+    id:'q3',cap:'Cap. 18',advance:2,rescueAdvance:1,
+    badge:'Shark Tank',badgeColor:'#854F0B',badgeBg:'#FAEEDA',
+    scenario:'Proveedor critico necesita 8 semanas. Cada semana de retraso cuesta $300.000 en ventas perdidas. TechBuild quiere entrega en 5 semanas y el proveedor pide incentivo.',
+    question:'¿Hasta cuanto es racional pagar de mas?',
+    opts:[
+      {l:'A',t:'Nada — nunca se paga mas del precio cotizado'},
+      {l:'B',t:'Exactamente $300.000, una semana de costo'},
+      {l:'C',t:'Lo que sea sin calcular'},
+      {l:'D',t:'Hasta $900.000 adicionales (3 semanas x $300K)'}
+    ],
+    correct:'D',
+    ok:'Perfecto. 3 semanas ahorradas x $300K = $900K de dano evitado. Cualquier pago menor a eso es rentable.',
+    bad:'El calculo: semanas ahorradas x costo por semana. 3 x $300K = $900K. Ese es el maximo racional.'
+  },
+  {
+    id:'q4',cap:'Cap. 18',advance:2,rescueAdvance:1,
+    badge:'Sala de Escape',badgeColor:'#534AB7',badgeBg:'#EEEDFE',
+    scenario:'Roger exige al subcontratista: <em>"Firma que entregas el 15 de marzo o no hay trato."</em> El proveedor corta la llamada. Roger dice que es imposible negociar con ellos.',
+    question:'¿Cual es la estrategia correcta segun el Cap. 18?',
+    opts:[
+      {l:'A',t:'Escalar al CEO para que presione al proveedor'},
+      {l:'B',t:'Avisos anticipados (10, 3 y 1 dia) + pago extra por plazo corto'},
+      {l:'C',t:'Buscar proveedor que acepte fechas fijas'},
+      {l:'D',t:'Aceptar 8 semanas y reducir alcance'}
+    ],
+    correct:'B',
+    ok:'Correcto. Fecha fija activa el sindrome del estudiante. Avisos anticipados + incentivo economico es lo que funciona.',
+    bad:'Exigir fecha fija garantiza que el proveedor use todo el tiempo. Avisos + incentivo es la formula correcta.'
+  },
+  {
+    id:'q5',cap:'Cap. 19',advance:3,rescueAdvance:1,
+    badge:'Decision Ejecutiva',badgeColor:'#085041',badgeBg:'#E1F5EE',
+    scenario:'TechBuild tiene 5 proyectos simultaneos. El Departamento de Arquitectura participa en todos y esta saturado. Cada equipo reclama maxima prioridad. Ningun proyecto avanza bien.',
+    question:'¿Cual es el diagnostico correcto segun el Cap. 19?',
+    opts:[
+      {l:'A',t:'Arquitectura es el cuello de botella global — gestionarlo como restriccion compartida del portafolio'},
+      {l:'B',t:'Cancelar 3 proyectos para reducir la carga'},
+      {l:'C',t:'Dar independencia total a cada proyecto'},
+      {l:'D',t:'Contratar mas personas en Arquitectura'}
+    ],
+    correct:'A',
+    ok:'Exacto. Gestionar proyectos independientes ignorando la restriccion global es el problema. Hay que subordinar todo al cuello de botella compartido.',
+    bad:'Contratar puede ayudar a largo plazo, pero no resuelve la priorizacion. El recurso saturado es la restriccion de todo el portafolio.'
+  },
+  {
+    id:'q6',cap:'17-18-19',advance:3,rescueAdvance:2,
+    badge:'Reto Final',badgeColor:'#0D1B3E',badgeBg:'#E6F1FB',
+    scenario:'Isaac Levy pide al equipo explicar los 3 cambios fundamentales implementados en Genemodem que produjeron resultados en solo 3 semanas.',
+    question:'¿Cuales son los 3 cambios clave del metodo (Cap. 17)?',
+    opts:[
+      {l:'A',t:'PMO, software avanzado y standups diarios'},
+      {l:'B',t:'Penalizaciones por retraso y ranking de productividad'},
+      {l:'C',t:'Mas reuniones, mas reportes, mas control individual'},
+      {l:'D',t:'Reducir estimaciones al 50%, eliminar fechas por etapa, reportar tiempo restante'}
+    ],
+    correct:'D',
+    ok:'Perfecto. Los 3 cambios: reducir plazos a la mitad, eliminar fechas de terminacion individuales y preguntar tiempo restante — no porcentaje completado.',
+    bad:'Los 3 cambios reales son contraintuitivos: reducir plazos a la mitad, sin fechas individuales, y preguntar tiempo restante en lugar de % completado.'
+  }
+];
+
+// RESCATES — respuestas alternadas: B, D, A, C, B, D
+var RESCUES = {
+  q1:{
+    q:'¿Por que el porcentaje completado es engañoso en Cadena Critica?',
+    opts:[
+      {l:'A',t:'La gente siempre exagera el avance para quedar bien'},
+      {l:'B',t:'No captura si el proyecto llegara a tiempo — solo cuanto hay hecho'},
+      {l:'C',t:'Es dificil de calcular en proyectos complejos'},
+      {l:'D',t:'Depende de la subjetividad de cada miembro'}
+    ],
+    correct:'B',fb:'El % completado dice cuanto se ha hecho, pero no dice si hay tiempo suficiente. El buffer si captura esa informacion.'
+  },
+  q2:{
+    q:'Si el buffer empezo en 9 semanas y hoy tiene 7, ¿que significa?',
+    opts:[
+      {l:'A',t:'El proyecto va muy mal — perdio 2 semanas'},
+      {l:'B',t:'Hay que activar alarma roja con el CEO'},
+      {l:'C',t:'El proyecto va bien — aun tiene 7 semanas de colchon'},
+      {l:'D',t:'Depende: consumo gradual es normal, consumo repentino es alarma'}
+    ],
+    correct:'D',fb:'El buffer que se consume gradualmente en proporcion al avance es señal saludable. Solo es alarma si se consume mucho mas rapido que el avance.'
+  },
+  q3:{
+    q:'¿Por que un retraso de 1 mes puede costar mas de lo que parece?',
+    opts:[
+      {l:'A',t:'Porque parte de las ventas no se recuperan si la ventana competitiva se cierra'},
+      {l:'B',t:'Por el costo de horas extra del equipo'},
+      {l:'C',t:'Por las penalizaciones contractuales'},
+      {l:'D',t:'Por el deterioro de la moral del equipo'}
+    ],
+    correct:'A',fb:'El dinero no solo se retrasa — parte se pierde si un competidor ocupa el espacio de mercado.'
+  },
+  q4:{
+    q:'¿Para que sirven los avisos anticipados al proveedor (10, 3 y 1 dia)?',
+    opts:[
+      {l:'A',t:'Para presionarlo con recordatorios constantes'},
+      {l:'B',t:'Para tener evidencia si incumple'},
+      {l:'C',t:'Para que pueda planificar su carga sin fecha de inicio fija'},
+      {l:'D',t:'Para cumplir requisitos formales del contrato'}
+    ],
+    correct:'C',fb:'La razon por la que el proveedor pide fecha fija es para planificar. Los avisos le dan exactamente eso, sin el sindrome del estudiante.'
+  },
+  q5:{
+    q:'Si un recurso es cuello de botella en 5 proyectos y cada uno lo trata como suyo, ¿que pasa?',
+    opts:[
+      {l:'A',t:'El recurso se vuelve mas eficiente'},
+      {l:'B',t:'Se crea multitarea forzada que ralentiza todos los proyectos'},
+      {l:'C',t:'Los proyectos importantes ganan prioridad automaticamente'},
+      {l:'D',t:'El recurso aprende a trabajar mas rapido'}
+    ],
+    correct:'B',fb:'Cuando todos reclaman maxima prioridad, el recurso salta entre proyectos — multitarea que hace que todos avancen lento.'
+  },
+  q6:{
+    q:'¿Por que es clave NO dar fechas de terminacion individuales por etapa?',
+    opts:[
+      {l:'A',t:'Para simplificar la administracion'},
+      {l:'B',t:'Para que el equipo no se estrese'},
+      {l:'C',t:'Porque nadie las cumple de todas formas'},
+      {l:'D',t:'La fecha fija activa el sindrome del estudiante: si hay 2 semanas, se usan las 2'}
+    ],
+    correct:'D',fb:'La fecha fija dice exactamente hasta cuando puede esperar. Sin ella, la urgencia es real desde el primer dia.'
+  }
+};
+
+// ════════════════════════════════════════
+// FIREBASE — con fallback a localStorage
+// ════════════════════════════════════════
+var db = null;
+var firebaseOk = false;
+
+function initFirebase(){
+  try {
+    if(typeof firebase !== 'undefined'){
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      // Test de conexion
+      db.ref('.info/connected').on('value', function(snap){
+        firebaseOk = snap.val() === true;
+      });
+    }
+  } catch(e){
+    firebaseOk = false;
+  }
+}
+
+function saveProgress(teamId, data){
+  var key = 'team_'+teamId;
+  var payload = Object.assign({}, data, {
+    teamId: teamId,
+    teamName: TEAMS[teamId].name,
+    teamRole: TEAMS[teamId].role,
+    teamColor: TEAMS[teamId].color,
+    updatedAt: Date.now()
+  });
+  // Siempre guardar en localStorage como backup
+  try { localStorage.setItem(key, JSON.stringify(payload)); } catch(e){}
+  // Intentar Firebase
+  if(db && firebaseOk){
+    db.ref('techbuild/teams/'+key).set(payload).catch(function(){});
+  }
+}
+
+function loadAllProgress(callback){
+  var fallback = function(){
+    var results = {};
+    for(var i=1;i<=7;i++){
+      try {
+        var raw = localStorage.getItem('team_'+i);
+        if(raw) results['team_'+i] = JSON.parse(raw);
+      } catch(e){}
+    }
+    callback(results);
+  };
+
+  if(db && firebaseOk){
+    db.ref('techbuild/teams').once('value')
+      .then(function(snap){
+        var val = snap.val();
+        if(val){ callback(val); }
+        else { fallback(); }
+      })
+      .catch(fallback);
+  } else {
+    fallback();
+  }
+}
+
+function listenProgress(callback){
+  if(db && firebaseOk){
+    db.ref('techbuild/teams').on('value', function(snap){
+      var val = snap.val();
+      callback(val || {});
+    });
+  } else {
+    // Polling de localStorage cada 3 segundos
+    setInterval(function(){
+      var results = {};
+      for(var i=1;i<=7;i++){
+        try {
+          var raw = localStorage.getItem('team_'+i);
+          if(raw) results['team_'+i] = JSON.parse(raw);
+        } catch(e){}
+      }
+      callback(results);
+    }, 3000);
+  }
+}
+
+function resetAllData(){
+  for(var i=1;i<=7;i++){
+    try { localStorage.removeItem('team_'+i); } catch(e){}
+  }
+  if(db && firebaseOk){
+    db.ref('techbuild/teams').remove().catch(function(){});
+  }
+}
+
+// ════════════════════════════════════════
+// ESTADO
+// ════════════════════════════════════════
+var G = {
+  teamId:null, pos:0, pts:0,
+  qIndex:0, phase:'question',
+  timer:null, timeLeft:0, rescueFor:null
+};
+var TIME = 50;
+var GOAL = 11;
+
+// ════════════════════════════════════════
+// TABLERO
+// ════════════════════════════════════════
+function buildTrack(){
+  var track = document.getElementById('track');
+  if(!track) return;
+  track.innerHTML = '';
+  STEPS.slice(1, STEPS.length-1).forEach(function(step){
+    var isActive = step.id === G.pos;
+    var isDone = step.id < G.pos;
+    var div = document.createElement('div');
+    div.className = 'step'+(step.type==='milestone'?' milestone':'')+
+      (isActive?' active':'')+(isDone?' done':'');
+    var numBg = isDone?'#0d2a10':(step.type==='milestone'?'#3a2a00':'#1e3a66');
+    var numColor = isDone?'#97C459':(step.type==='milestone'?'#F4A124':'#85B7EB');
+    div.innerHTML =
+      '<div class="step-num" style="background:'+numBg+';color:'+numColor+'">'+
+        (isDone?'&#10003;':step.icon)+
+      '</div>'+
+      '<div class="step-info">'+
+        '<div class="step-name">'+step.name+'</div>'+
+        '<div class="step-desc">'+step.desc+'</div>'+
+      '</div>'+
+      (isActive?'<div class="step-here">AQUI</div>':'');
+    track.appendChild(div);
+  });
+  document.getElementById('g-pos').textContent = G.pos;
+  document.getElementById('g-pts').textContent = G.pts;
+}
+
+// ════════════════════════════════════════
+// PREGUNTAS
+// ════════════════════════════════════════
+function renderQuestion(){
+  var q = QUESTIONS[G.qIndex % QUESTIONS.length];
+  var area = document.getElementById('q-area');
+  area.innerHTML =
+    '<div class="timer-wrap">'+
+      '<div class="timer-top"><span class="timer-lbl">Tiempo</span><span class="timer-num" id="tc">'+TIME+'</span></div>'+
+      '<div class="timer-bar"><div class="timer-fill" id="tf" style="width:100%"></div></div>'+
+    '</div>'+
+    '<div class="q-card">'+
+      '<span class="q-badge" style="background:'+q.badgeBg+';color:'+q.badgeColor+'">'+q.badge+' &middot; '+q.cap+'</span>'+
+      '<div class="q-scenario">'+q.scenario+'</div>'+
+      '<div class="q-question">'+q.question+'</div>'+
+      '<div class="opts" id="opts">'+
+        q.opts.map(function(o){
+          return '<button class="opt" onclick="pick(\''+o.l+'\')">'+
+            '<span class="opt-letter">'+o.l+'</span>'+o.t+'</button>';
+        }).join('')+
+      '</div>'+
+      '<div class="feedback" id="fb"></div>'+
+    '</div>'+
+    '<div id="nxt"></div>';
+  startTimer();
+}
+
+function renderRescue(){
+  var rq = RESCUES[G.rescueFor];
+  var area = document.getElementById('q-area');
+  area.innerHTML =
+    '<div class="q-card">'+
+      '<div class="rescue-hdr"><h3>PREGUNTA DE RESCATE</h3><p>Responde bien para avanzar al menos 1 paso</p></div>'+
+      '<div class="q-question">'+rq.q+'</div>'+
+      '<div class="opts" id="rescue-opts">'+
+        rq.opts.map(function(o){
+          return '<button class="opt" onclick="rescuePick(\''+o.l+'\')">'+
+            '<span class="opt-letter">'+o.l+'</span>'+o.t+'</button>';
+        }).join('')+
+      '</div>'+
+      '<div class="feedback" id="rfb"></div>'+
+    '</div>'+
+    '<div id="rnxt"></div>';
+}
+
+// ════════════════════════════════════════
+// LOGICA
+// ════════════════════════════════════════
+function startTimer(){
+  G.timeLeft = TIME;
+  clearInterval(G.timer);
+  G.timer = setInterval(function(){
+    G.timeLeft--;
+    var tc=document.getElementById('tc');
+    var tf=document.getElementById('tf');
+    if(tc) tc.textContent=G.timeLeft;
+    if(tf){
+      tf.style.width=Math.round((G.timeLeft/TIME)*100)+'%';
+      if(G.timeLeft<=12) tf.classList.add('red');
+    }
+    if(G.timeLeft<=0){ clearInterval(G.timer); timeOut(); }
+  },1000);
+}
+
+function timeOut(){
+  var q=QUESTIONS[G.qIndex%QUESTIONS.length];
+  revealCorrect('opts',q.correct);
+  var fb=document.getElementById('fb');
+  if(fb){ fb.classList.add('show','bad'); fb.innerHTML='<strong>Tiempo agotado.</strong> '+q.bad; }
+  var nxt=document.getElementById('nxt');
+  if(nxt) nxt.innerHTML='<button class="btn-main" onclick="goRescue()">Pregunta de rescate &rarr;</button>';
+}
+
+function revealCorrect(containerId, correct){
+  document.querySelectorAll('#'+containerId+' .opt').forEach(function(o,i){
+    o.disabled=true;
+    var l=['A','B','C','D'][i];
+    if(l===correct) o.classList.add('correct');
+  });
+}
+
+function pick(letter){
+  clearInterval(G.timer);
+  var q=QUESTIONS[G.qIndex%QUESTIONS.length];
+  document.querySelectorAll('#opts .opt').forEach(function(o,i){
+    o.disabled=true;
+    var l=['A','B','C','D'][i];
+    if(l===q.correct) o.classList.add('correct');
+    else if(l===letter&&letter!==q.correct) o.classList.add('wrong');
+  });
+  var isOk=letter===q.correct;
+  var fb=document.getElementById('fb');
+  var nxt=document.getElementById('nxt');
+  if(isOk){
+    var bonus=Math.round((G.timeLeft/TIME)*30);
+    var earned=100+bonus;
+    G.pts+=earned;
+    G.pos=Math.min(G.pos+q.advance,GOAL);
+    buildTrack();
+    syncProgress();
+    if(fb){ fb.classList.add('show','good'); fb.innerHTML='<strong>Correcto!</strong> +'+earned+' puntos. Avanzas '+q.advance+' pasos. '+q.ok; }
+    if(G.pos>=GOAL){ setTimeout(showVictory,2000); return; }
+    if(nxt) nxt.innerHTML='<button class="btn-main" onclick="nextQ()">Siguiente reto &rarr;</button>';
+  } else {
+    if(fb){ fb.classList.add('show','bad'); fb.innerHTML='<strong>No exactamente.</strong> '+q.bad; }
+    if(nxt) nxt.innerHTML='<button class="btn-main" onclick="goRescue()">Pregunta de rescate &rarr;</button>';
+  }
+}
+
+function goRescue(){
+  G.rescueFor=QUESTIONS[G.qIndex%QUESTIONS.length].id;
+  renderRescue();
+}
+
+function rescuePick(letter){
+  var rq=RESCUES[G.rescueFor];
+  document.querySelectorAll('#rescue-opts .opt').forEach(function(o,i){
+    o.disabled=true;
+    var l=['A','B','C','D'][i];
+    if(l===rq.correct) o.classList.add('correct');
+    else if(l===letter&&letter!==rq.correct) o.classList.add('wrong');
+  });
+  var isOk=letter===rq.correct;
+  var rfb=document.getElementById('rfb');
+  var rnxt=document.getElementById('rnxt');
+  var q=QUESTIONS[G.qIndex%QUESTIONS.length];
+  if(isOk){
+    G.pts+=40;
+    G.pos=Math.min(G.pos+q.rescueAdvance,GOAL);
+    buildTrack();
+    syncProgress();
+    if(rfb){ rfb.classList.add('show','good'); rfb.innerHTML='<strong>Rescate exitoso!</strong> +40 pts. Avanzas '+q.rescueAdvance+' paso(s). '+rq.fb; }
+    if(G.pos>=GOAL){ setTimeout(showVictory,2000); return; }
+  } else {
+    if(rfb){ rfb.classList.add('show','bad'); rfb.innerHTML='<strong>Rescate fallido.</strong> Te quedas en paso '+G.pos+'. '+rq.fb; }
+  }
+  if(rnxt) rnxt.innerHTML='<button class="btn-main" onclick="nextQ()">Continuar &rarr;</button>';
+}
+
+function nextQ(){
+  G.qIndex++;
+  renderQuestion();
+}
+
+function syncProgress(){
+  if(!G.teamId) return;
+  saveProgress(G.teamId, {
+    pos: G.pos,
+    pts: G.pts,
+    qIndex: G.qIndex,
+    finished: G.pos >= GOAL,
+    finishedAt: G.pos >= GOAL ? Date.now() : null
+  });
+}
+
+function showVictory(){
+  var team=TEAMS[G.teamId];
+  G.pos=GOAL;
+  syncProgress();
+  document.getElementById('win-teamname').textContent=team.name+' — '+team.role;
+  document.getElementById('win-teamname').style.color=team.color;
+  document.getElementById('win-code').textContent=team.code;
+  document.getElementById('win-msg').innerHTML=
+    '<strong>Mensaje de Isaac Levy:</strong> "'+team.name+
+    ' demostro dominar la Cadena Critica de principio a fin. TechBuild firma el contrato."<br><br>'+
+    '<strong>Puntuacion final: '+G.pts+' puntos &middot; '+GOAL+' pasos completados</strong>';
+  goScreen('s-win');
+}
+
+// ════════════════════════════════════════
+// DASHBOARD PROFESOR
+// ════════════════════════════════════════
+var dashInterval = null;
+var firstWinner = null;
+
+function initDashboard(){
+  goScreen('s-dashboard');
+  renderDashEmpty();
+  listenProgress(updateDashboard);
+}
+
+function renderDashEmpty(){
+  var grid=document.getElementById('teams-grid-dash');
+  grid.innerHTML='<div class="no-data">Esperando que los equipos se conecten...<br><br>Los equipos deben abrir la misma URL en sus dispositivos.</div>';
+}
+
+function updateDashboard(data){
+  var now = new Date();
+  document.getElementById('last-sync').textContent=
+    'Ultima actualizacion: '+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+
+  // Construir datos de todos los equipos
+  var allTeams = [];
+  for(var i=1;i<=7;i++){
+    var key='team_'+i;
+    var d=data[key]||null;
+    allTeams.push({
+      id:i,
+      name:TEAMS[i].name,
+      role:TEAMS[i].role,
+      color:TEAMS[i].color,
+      pos:d?d.pos:0,
+      pts:d?d.pts:0,
+      finished:d?d.finished:false,
+      finishedAt:d?d.finishedAt:null,
+      connected:d?true:false
+    });
+  }
+
+  // Detectar primer ganador
+  var finished = allTeams.filter(function(t){return t.finished;})
+    .sort(function(a,b){return (a.finishedAt||Infinity)-(b.finishedAt||Infinity)});
+  if(finished.length>0 && !firstWinner){
+    firstWinner = finished[0];
+    var wb=document.getElementById('winner-banner');
+    var wn=document.getElementById('winner-name');
+    var wd=document.getElementById('winner-detail');
+    wn.textContent='★ Ganador: '+firstWinner.name+' — '+firstWinner.role;
+    wn.style.color=firstWinner.color;
+    wd.textContent='Llegaron primero a la meta con '+firstWinner.pts+' puntos';
+    wb.classList.add('show');
+  }
+
+  // Ordenar por posicion, luego por puntos
+  var sorted=[].concat(allTeams).sort(function(a,b){
+    if(b.pos!==a.pos) return b.pos-a.pos;
+    return b.pts-a.pts;
+  });
+
+  // Render tarjetas
+  var grid=document.getElementById('teams-grid-dash');
+  grid.innerHTML=allTeams.map(function(t){
+    var pct=Math.round((t.pos/GOAL)*100);
+    var rank=sorted.findIndex(function(s){return s.id===t.id;})+1;
+    var statusClass='status-waiting';
+    var statusText='Esperando...';
+    if(t.finished){ statusClass='status-winner'; statusText='META ALCANZADA ★'; }
+    else if(t.connected && t.pos>0){ statusClass='status-playing'; statusText='Jugando — paso '+t.pos; }
+    else if(t.connected){ statusClass='status-playing'; statusText='Conectado'; }
+    var cardClass='team-dash-card';
+    if(t.finished && firstWinner && t.id===firstWinner.id) cardClass+=' finished';
+    else if(rank===1 && t.pos>0) cardClass+=' leading';
+    return '<div class="'+cardClass+'">'+
+      '<div class="tdc-header">'+
+        '<div class="tdc-avatar" style="background:'+t.color+'20;color:'+t.color+'">'+
+          TEAM_ICONS[t.id]+
+        '</div>'+
+        '<div>'+
+          '<div class="tdc-name">'+t.name+'</div>'+
+          '<div class="tdc-role">'+t.role+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="tdc-stats">'+
+        '<div class="tdc-stat"><div class="tdc-stat-lbl">Paso</div><div class="tdc-stat-val" style="color:'+t.color+'">'+t.pos+'/'+GOAL+'</div></div>'+
+        '<div class="tdc-stat"><div class="tdc-stat-lbl">Puntos</div><div class="tdc-stat-val">'+t.pts+'</div></div>'+
+        '<div class="tdc-stat"><div class="tdc-stat-lbl">Posicion</div><div class="tdc-stat-val">#'+rank+'</div></div>'+
+      '</div>'+
+      '<div class="progress-bar-wrap">'+
+        '<div class="progress-bar-fill" style="width:'+pct+'%;background:'+t.color+'"></div>'+
+      '</div>'+
+      '<div class="tdc-step-lbl">'+pct+'% del recorrido</div>'+
+      '<span class="tdc-status '+statusClass+'">'+statusText+'</span>'+
+    '</div>';
+  }).join('');
+
+  // Leaderboard
+  var lb=document.getElementById('leaderboard');
+  var medals=['&#129351;','&#129352;','&#129353;','4','5','6','7'];
+  var colors=['#F4A124','#8aabcc','#BA7517'];
+  lb.innerHTML=sorted.map(function(t,i){
+    return '<div class="lb-row">'+
+      '<div class="lb-pos" style="background:'+(i<3?colors[i]+'30':'#1e3a66')+';color:'+(i<3?colors[i]:'#8aabcc')+'">'+medals[i]+'</div>'+
+      '<div style="width:30px;text-align:center;font-size:16px">'+TEAM_ICONS[t.id]+'</div>'+
+      '<div class="lb-name" style="color:'+t.color+'">'+t.name+'<br><span style="font-size:10px;color:#8aabcc;font-weight:400">'+t.role+'</span></div>'+
+      '<div class="lb-step">paso '+t.pos+'</div>'+
+      '<div class="lb-pts">'+t.pts+' pts</div>'+
+    '</div>';
+  }).join('');
+}
+
+function resetAllTeams(){
+  if(!confirm('¿Reiniciar el progreso de todos los equipos?')) return;
+  resetAllData();
+  firstWinner=null;
+  document.getElementById('winner-banner').classList.remove('show');
+  renderDashEmpty();
+  document.getElementById('leaderboard').innerHTML='';
+}
+
+// ════════════════════════════════════════
+// NAVEGACION Y SETUP
+// ════════════════════════════════════════
+function goScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function selectTeam(id){
+  G.teamId=id; G.pos=0; G.pts=0; G.qIndex=0;
+  var team=TEAMS[id];
+  document.getElementById('g-teamname').textContent=team.name;
+  document.getElementById('g-teamname').style.color=team.color;
+  document.getElementById('g-teamrole').textContent=team.role;
+  syncProgress();
+  buildTrack();
+  renderQuestion();
+  goScreen('s-game');
+}
+
+// Render botones de equipo
+(function buildTeamButtons(){
+  var icons=['&#128270;','&#128736;','&#128200;','&#129309;','&#128202;','&#127759;','&#127942;'];
+  var grid=document.getElementById('team-grid');
+  var colors=['#E24B4A20','#378ADD20','#63992220','#BA751720','#7F77DD20','#1D9E7520','#D4537E20'];
+  var borders=['#E24B4A','#378ADD','#639922','#BA7517','#7F77DD','#1D9E75','#D4537E'];
+  if(!grid) return;
+  grid.innerHTML=Object.keys(TEAMS).map(function(k){
+    var t=TEAMS[k];
+    var i=parseInt(k)-1;
+    return '<button class="team-btn" onclick="selectTeam('+k+')" '+
+      'style="background:'+colors[i]+';border-color:'+borders[i]+'60">'+
+      '<div class="team-icon">'+icons[i]+'</div>'+
+      '<div class="team-name-lbl" style="color:'+borders[i]+'">'+t.name+'</div>'+
+      '<div class="team-role-lbl">'+t.role+'</div>'+
+      '</button>';
+  }).join('');
+})();
+
+// Init Firebase al cargar
+initFirebase();
+</script>
+</body>
+</html>
