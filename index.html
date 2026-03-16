@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TechBuild en Crisis — Cadena Critica</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;min-height:100vh;color:#e8f0fb}
+.screen{display:none;padding:18px;max-width:620px;margin:0 auto;min-height:100vh}
+.screen.active{display:block}
+#s-dashboard{max-width:1080px}
+.top-bar{text-align:center;padding:14px 0 10px}
+.top-bar h1{font-size:19px;font-weight:700;color:#F4A124;letter-spacing:1px}
+.top-bar p{font-size:12px;color:#8aabcc;margin-top:3px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.mode-btn{background:#0f2040;border:2px solid #1e3a66;border-radius:14px;padding:20px 14px;cursor:pointer;text-align:center;transition:all .2s;font-family:inherit;color:#e8f0fb}
+.mode-btn:hover{border-color:#F4A124;background:#1a2e50}
+.mode-icon{font-size:28px;margin-bottom:7px}
+.mode-name{font-size:14px;font-weight:700;margin-bottom:3px}
+.mode-desc{font-size:11px;color:#8aabcc;line-height:1.4}
+.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.team-btn{background:#0f2040;border:2px solid #1e3a66;border-radius:12px;padding:13px 10px;cursor:pointer;text-align:center;font-family:inherit;transition:all .2s;color:#e8f0fb}
+.team-btn:hover{background:#152a50}
+.ti{font-size:20px;margin-bottom:4px}
+.tnm{font-size:13px;font-weight:700;margin-bottom:2px}
+.trl{font-size:10px;color:#8aabcc}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.sp{background:#0f2040;border:1px solid #1e3a66;border-radius:10px;padding:9px;text-align:center}
+.spl{font-size:10px;color:#8aabcc;margin-bottom:2px}
+.spv{font-size:18px;font-weight:700;color:#F4A124}
+.track-wrap{background:#0f2040;border-radius:12px;padding:11px;border:1px solid #1e3a66;margin-bottom:11px}
+.track-lbl{font-size:10px;color:#8aabcc;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;text-align:center}
+.track{display:flex;flex-direction:column;gap:4px}
+.step{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:7px;border:1px solid #1e3a66;background:#0d1e3a;transition:all .4s}
+.step.ms{border-color:#F4A12440;background:#1a2e50}
+.step.act{border-color:#F4A124;background:#1e3352}
+.step.dn{border-color:#3B6D1150;background:#0d2010}
+.snum{width:23px;height:23px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.sinfo{flex:1}
+.sname{font-size:11px;font-weight:600;color:#c8d8f0}
+.sdesc{font-size:9px;color:#6a8aaa;margin-top:1px}
+.shere{font-size:9px;font-weight:700;color:#F4A124;background:#1e3352;border:1px solid #F4A124;border-radius:8px;padding:1px 6px;flex-shrink:0;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.finrow{background:#1a3a1a;border:1px solid #3B6D11;border-radius:8px;padding:7px;text-align:center;margin-top:5px}
+.finrow span{font-size:11px;font-weight:700;color:#97C459}
+.tw{margin-bottom:9px}
+.tt{display:flex;justify-content:space-between;margin-bottom:3px}
+.tll{font-size:10px;color:#8aabcc}
+.tnum{font-size:14px;font-weight:700;color:#F4A124}
+.tbar{height:5px;background:#1e3a66;border-radius:3px;overflow:hidden}
+.tfil{height:100%;background:#F4A124;transition:width 1s linear;border-radius:3px}
+.tfil.red{background:#E24B4A}
+.qcard{background:#fff;border-radius:12px;padding:1rem;color:#1e293b;margin-bottom:9px}
+.qbadge{display:inline-block;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;margin-bottom:7px}
+.qsc{background:#f0f4fa;border-radius:7px;padding:8px 10px;font-size:12px;color:#334155;line-height:1.6;margin-bottom:9px;border-left:3px solid #F4A124}
+.qq{font-size:13px;font-weight:700;color:#0D1B3E;margin-bottom:9px}
+.opts{display:grid;gap:6px}
+.opt{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 11px;font-size:12px;color:#1e293b;cursor:pointer;text-align:left;line-height:1.4;transition:all .15s;font-family:inherit;width:100%;display:flex;align-items:flex-start;gap:7px}
+.opt:hover:not(:disabled){background:#e8f0fb;border-color:#378ADD}
+.opt.ok{background:#EAF3DE;border-color:#3B6D11;color:#1a4008;font-weight:600}
+.opt.no{background:#FCEBEB;border-color:#A32D2D;color:#5c1010}
+.opt:disabled{cursor:default}
+.ol{min-width:21px;height:21px;border-radius:50%;background:#e2e8f0;color:#64748B;font-size:10px;font-weight:700;text-align:center;line-height:21px;flex-shrink:0}
+.opt.ok .ol{background:#3B6D11;color:#fff}
+.opt.no .ol{background:#A32D2D;color:#fff}
+.fb{border-radius:7px;padding:8px 10px;font-size:12px;line-height:1.6;margin-top:7px;display:none}
+.fb.show{display:block}
+.fb.g{background:#EAF3DE;border:1px solid #97C459;color:#1a4008}
+.fb.b{background:#FCEBEB;border:1px solid #F09595;color:#5c1010}
+.rh{background:#FAEEDA;border-radius:7px;padding:7px 9px;margin-bottom:9px;text-align:center}
+.rh h3{font-size:12px;font-weight:700;color:#854F0B}
+.rh p{font-size:10px;color:#854F0B;margin-top:2px}
+.ws{text-align:center;padding:22px 14px}
+.wi{font-size:50px;margin-bottom:10px}
+.wt{font-size:21px;font-weight:700;color:#F4A124;margin-bottom:5px}
+.wn{font-size:15px;font-weight:700;margin-bottom:3px}
+.wu{font-size:12px;color:#8aabcc;margin-bottom:18px;line-height:1.5}
+.wc{background:#0f2040;border:2px solid #F4A124;border-radius:12px;padding:16px;margin-bottom:14px}
+.wcl{font-size:10px;color:#8aabcc;text-transform:uppercase;letter-spacing:2px;margin-bottom:7px}
+.wcv{font-size:30px;font-weight:700;color:#F4A124;letter-spacing:5px;font-family:'Courier New',monospace}
+.wch{font-size:10px;color:#6a8aaa;margin-top:5px}
+.wmsg{background:#1a3a1a;border:1px solid #3B6D11;border-radius:8px;padding:11px;font-size:12px;color:#c8d8f0;line-height:1.6;text-align:left;margin-bottom:14px}
+.bm{display:block;width:100%;background:#F4A124;border:none;border-radius:9px;padding:12px;font-size:13px;font-weight:700;color:#0D1B3E;cursor:pointer;font-family:inherit;margin-top:7px}
+.bm:hover{background:#e8941a}
+.bs{display:block;width:100%;background:transparent;border:1.5px solid #2a4a8b;border-radius:9px;padding:10px;font-size:12px;color:#B5D4F4;cursor:pointer;font-family:inherit;margin-top:5px}
+.bs:hover{background:#182d56}
+.br{background:#182d56;border-radius:10px;padding:11px;border-left:4px solid #E24B4A;margin-bottom:11px}
+.br h3{font-size:12px;font-weight:700;color:#F87171;margin-bottom:4px;text-transform:uppercase}
+.br p{font-size:12px;color:#c8d8f0;line-height:1.6}
+.rul{background:#0f2040;border-radius:10px;padding:11px;border:1px solid #1e3a66;margin-bottom:11px}
+.rul h3{font-size:11px;font-weight:700;color:#F4A124;margin-bottom:6px}
+.rul li{font-size:11px;color:#c8d8f0;line-height:1.8;margin-left:13px}
+.dh{background:#1A3A6B;border-radius:12px;padding:14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.dht h2{font-size:19px;font-weight:700;color:#F4A124}
+.dht p{font-size:11px;color:#8aabcc;margin-top:2px}
+.dlive{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:#1a3a1a;color:#97C459;border:1px solid #3B6D11}
+.ldot{width:7px;height:7px;border-radius:50%;background:#97C459;animation:blink 1s infinite}
+.dsync{font-size:10px;color:#8aabcc;margin-top:4px}
+.dconn{font-size:11px;margin-top:3px}
+.conn-ok{color:#97C459}
+.conn-no{color:#F87171}
+.wb{background:#1a2a00;border:2px solid #F4A124;border-radius:10px;padding:12px;margin-bottom:12px;text-align:center;display:none}
+.wb.show{display:block;animation:glow 1s ease-in-out infinite alternate}
+@keyframes glow{from{border-color:#F4A124}to{border-color:#BA7517}}
+.wb h3{font-size:16px;font-weight:700;color:#F4A124;margin-bottom:3px}
+.wb p{font-size:12px;color:#FAC775}
+.tg{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:11px;margin-bottom:12px}
+.tc{background:#0f2040;border:1.5px solid #1e3a66;border-radius:12px;padding:13px;transition:all .4s}
+.tc.lead{border-color:#F4A124}
+.tc.fin{border-color:#3B6D11;background:#0a1e10}
+.tc-top{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.tc-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}
+.tc-nm{font-size:13px;font-weight:700;color:#e8f0fb}
+.tc-rl{font-size:10px;color:#8aabcc}
+.tc-st{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:9px}
+.tc-s{background:#0a1628;border-radius:6px;padding:6px;text-align:center}
+.tc-sl{font-size:9px;color:#8aabcc;margin-bottom:2px}
+.tc-sv{font-size:15px;font-weight:700}
+.pb{height:8px;background:#1e3a66;border-radius:4px;overflow:hidden;margin-bottom:4px}
+.pf{height:100%;border-radius:4px;transition:width 1.2s ease}
+.pl{font-size:9px;color:#8aabcc;text-align:right}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-top:5px}
+.tag-p{background:#1e3a66;color:#85B7EB}
+.tag-w{background:#2a1a00;color:#FAC775}
+.tag-f{background:#1a3a1a;color:#97C459}
+.tag-win{background:#3a2a00;color:#F4A124;border:1px solid #F4A124}
+.lb{background:#0f2040;border-radius:12px;padding:13px;border:1px solid #1e3a66;margin-bottom:12px}
+.lb-t{font-size:13px;font-weight:700;color:#F4A124;margin-bottom:9px}
+.lr{display:flex;align-items:center;gap:9px;padding:7px 5px;border-bottom:1px solid #1e3a66;transition:all .4s}
+.lr:last-child{border-bottom:none}
+.lp{width:25px;height:25px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.li{flex:1}
+.ln{font-size:12px;font-weight:700;color:#e8f0fb}
+.lro{font-size:10px;color:#8aabcc}
+.lr-r{text-align:right}
+.lpts{font-size:14px;font-weight:700;color:#F4A124}
+.lstp{font-size:10px;color:#8aabcc}
+.db{display:flex;gap:9px;flex-wrap:wrap}
+.bd{background:#F4A124;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:700;color:#0D1B3E;cursor:pointer;font-family:inherit}
+.bd:hover{background:#e8941a}
+.bds{background:transparent;border:1.5px solid #2a4a8b;border-radius:8px;padding:9px 18px;font-size:12px;color:#B5D4F4;cursor:pointer;font-family:inherit}
+.bds:hover{background:#182d56}
+@media(max-width:540px){.mode-grid,.team-grid{grid-template-columns:1fr}.tg{grid-template-columns:1fr}.db{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<div id="s-mode" class="screen active">
+  <div class="top-bar"><h1>TECHBUILD EN CRISIS</h1><p>Cadena Critica &middot; Caps 17 &middot; 18 &middot; 19</p></div>
+  <div class="mode-grid">
+    <button class="mode-btn" onclick="goS('s-intro')">
+      <div class="mode-icon">&#127918;</div>
+      <div class="mode-name">Soy jugador</div>
+      <div class="mode-desc">Selecciona tu equipo y juega en este dispositivo</div>
+    </button>
+    <button class="mode-btn" onclick="initDash()">
+      <div class="mode-icon">&#128202;</div>
+      <div class="mode-name">Soy el profesor</div>
+      <div class="mode-desc">Ver progreso de los 7 equipos en tiempo real</div>
+    </button>
+  </div>
+  <div style="background:#182d56;border-radius:10px;padding:11px;border-left:3px solid #F4A124;font-size:11px;color:#c8d8f0;line-height:1.7">
+    <strong style="color:#F4A124">Todos abren la misma URL.</strong><br>
+    Profesor abre "Soy el profesor" en pantalla grande.<br>
+    Cada equipo abre "Soy jugador" en su celular o laptop.<br>
+    <span id="fbstatus" style="color:#FAC775;font-size:10px">Conectando con Firebase...</span>
+  </div>
+</div>
+
+<div id="s-intro" class="screen">
+  <div class="top-bar"><h1>TECHBUILD EN CRISIS</h1><p>Cadena Critica &middot; Caps 17 &middot; 18 &middot; 19</p></div>
+  <div class="br"><h3>Mision urgente</h3><p>TechBuild S.A. tiene un proyecto retrasado 4 meses. El CEO contrata consultores. Recorre los 11 pasos respondiendo correctamente. El <strong style="color:#F4A124">primer equipo en llegar gana el contrato.</strong></p></div>
+  <div class="rul"><h3>Reglas</h3><ul>
+    <li>Respuesta correcta = avanzas 2-3 pasos</li>
+    <li>Respuesta incorrecta = pregunta de rescate</li>
+    <li>Rescate correcto = avanzas 1 paso, no retrocedes</li>
+    <li>Solo el PRIMER equipo en llegar es el ganador</li>
+    <li>El profesor ve el progreso de todos en tiempo real</li>
+  </ul></div>
+  <button class="bm" onclick="goS('s-teamselect')">ELEGIR MI EQUIPO</button>
+  <button class="bs" onclick="goS('s-mode')">Volver</button>
+</div>
+
+<div id="s-teamselect" class="screen">
+  <div class="top-bar"><h1>ELEGIR EQUIPO</h1><p>Selecciona el equipo asignado por el profesor</p></div>
+  <div class="team-grid" id="tgrid"></div>
+</div>
+
+<div id="s-game" class="screen">
+  <div class="top-bar">
+    <h1 id="g-nm" style="color:#F4A124">Equipo 1</h1>
+    <p id="g-rl">Los Detectives</p>
+  </div>
+  <div class="stats-row">
+    <div class="sp"><div class="spl">Paso</div><div class="spv" id="g-pos">0</div></div>
+    <div class="sp"><div class="spl">Puntos</div><div class="spv" id="g-pts">0</div></div>
+    <div class="sp"><div class="spl">Meta</div><div class="spv">11</div></div>
+  </div>
+  <div class="track-wrap">
+    <div class="track-lbl">Tu posicion en el tablero</div>
+    <div class="track" id="track"></div>
+    <div class="finrow"><span>&#9733; Meta: Empresa salvada</span></div>
+  </div>
+  <div id="qa"></div>
+</div>
+
+<div id="s-win" class="screen">
+  <div class="ws">
+    <div class="wi">&#11088;</div>
+    <div class="wt">MISION CUMPLIDA</div>
+    <div class="wn" id="w-nm"></div>
+    <div class="wu">Completaron el tablero.<br>Muestren este codigo al profesor.</div>
+    <div class="wc"><div class="wcl">CODIGO DE VICTORIA</div><div class="wcv" id="w-code">---</div><div class="wch">Capturen o anoten este codigo</div></div>
+    <div class="wmsg" id="w-msg"></div>
+  </div>
+</div>
+
+<div id="s-dashboard" class="screen">
+  <div class="dh">
+    <div class="dht"><h2>Panel del Profesor</h2><p>Firebase Realtime &mdash; sincronizacion entre dispositivos</p></div>
+    <div>
+      <div class="dlive"><div class="ldot"></div>Firebase activo</div>
+      <div class="dsync" id="dsync">Conectando...</div>
+      <div class="dconn" id="dconn"></div>
+    </div>
+  </div>
+  <div class="wb" id="wb"><h3 id="w-nm2">&#9733; Ganador</h3><p id="w-det"></p></div>
+  <div class="tg" id="tdash"></div>
+  <div class="lb"><div class="lb-t">&#127942; Clasificacion en tiempo real</div><div id="lboard"></div></div>
+  <div class="db">
+    <button class="bd" onclick="resetAll()">&#128260; Reiniciar todos</button>
+    <button class="bds" onclick="goS('s-mode')">Volver</button>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+// ═══════════════════════════════════════
+// FIREBASE — credenciales reales
+// ═══════════════════════════════════════
+var firebaseConfig = {
+  apiKey: "AIzaSyCmoZCNnnEeT6Xw51C4lOd9oHdn8FUCti0",
+  authDomain: "techbuild-ean.firebaseapp.com",
+  databaseURL: "https://techbuild-ean-default-rtdb.firebaseio.com",
+  projectId: "techbuild-ean",
+  storageBucket: "techbuild-ean.firebasestorage.app",
+  messagingSenderId: "587604298582",
+  appId: "1:587604298582:web:4696284d69f7a343f7a4f7"
+};
+
+var app = firebase.initializeApp(firebaseConfig);
+var db  = firebase.database();
+var REF = db.ref('juego_ean');
+
+// Verificar conexion
+db.ref('.info/connected').on('value', function(snap){
+  var ok = snap.val() === true;
+  var el = document.getElementById('fbstatus');
+  if(el) el.textContent = ok
+    ? '&#9679; Firebase conectado — sync activo entre dispositivos'
+    : '&#9679; Sin conexion — verifica tu internet';
+  if(el) el.style.color = ok ? '#97C459' : '#F87171';
+});
+
+// ═══════════════════════════════════════
+// DATOS
+// ═══════════════════════════════════════
+var T = {
+  1:{n:'Equipo 1',r:'Los Detectives',  c:'#E24B4A',code:'CC-DET-4821'},
+  2:{n:'Equipo 2',r:'Los Ingenieros',  c:'#378ADD',code:'CC-ING-7263'},
+  3:{n:'Equipo 3',r:'Los Analistas',   c:'#639922',code:'CC-ANL-5594'},
+  4:{n:'Equipo 4',r:'Los Negociadores',c:'#BA7517',code:'CC-NEG-3317'},
+  5:{n:'Equipo 5',r:'Los Estrategas',  c:'#7F77DD',code:'CC-EST-8802'},
+  6:{n:'Equipo 6',r:'Los Consultores', c:'#1D9E75',code:'CC-CON-6641'},
+  7:{n:'Equipo 7',r:'Los Lideres',     c:'#D4537E',code:'CC-LID-9150'}
+};
+var ICONS = ['&#128270;','&#128736;','&#128200;','&#129309;','&#128202;','&#127759;','&#127942;'];
+
+var STEPS = [
+  {id:0, n:'Punto de partida',     d:'TechBuild convoca consultores', ic:'&#9711;', t:'s'},
+  {id:1, n:'Analisis inicial',     d:'El CEO presenta reportes',      ic:'1',       t:'n'},
+  {id:2, n:'Sala de guerra',       d:'Primer diagnostico',            ic:'2',       t:'n'},
+  {id:3, n:'Checkpoint: Buffer',   d:'Concepto clave verificado',     ic:'&#9733;', t:'m'},
+  {id:4, n:'Negociacion interna',  d:'Estrategia alineada',           ic:'4',       t:'n'},
+  {id:5, n:'Reunion proveedores',  d:'Enfrentamiento externo',        ic:'5',       t:'n'},
+  {id:6, n:'Checkpoint: Costos',   d:'Impacto financiero calculado',  ic:'&#9733;', t:'m'},
+  {id:7, n:'Propuesta al CEO',     d:'Se presenta el plan',           ic:'7',       t:'n'},
+  {id:8, n:'Prueba de fuego',      d:'La junta evalua',               ic:'8',       t:'n'},
+  {id:9, n:'Checkpoint: Sistema',  d:'Multi-proyecto aprobado',       ic:'&#9733;', t:'m'},
+  {id:10,n:'Implementacion',       d:'El metodo se despliega',        ic:'10',      t:'n'},
+  {id:11,n:'META — Empresa salvada',d:'Contrato firmado',             ic:'&#9733;', t:'f'}
+];
+
+// Respuestas correctas: A, C, D, B, A, D — distribuidas
+var QS = [
+  {id:'q1',cap:'Cap. 17',adv:2,ra:1,badge:'Reto Detective',bc:'#A32D2D',bb:'#FCEBEB',
+   sc:'Fred reporta diario: <em>"Vamos al 65% completado."</em> Tres semanas despues el proyecto termina con 6 semanas de retraso. El CEO pregunta como es posible.',
+   q:'¿Cual fue el error fatal en el sistema de seguimiento?',
+   opts:[
+     {l:'A',t:'Median trabajo completado, no tiempo restante en el buffer'},
+     {l:'B',t:'Los reportes no eran suficientemente frecuentes'},
+     {l:'C',t:'No usaban grafico PERT actualizado'},
+     {l:'D',t:'Mark no visitaba al equipo en campo'}
+   ],
+   ok:'A',
+   fo:'Exacto. La pregunta correcta es: ¿cuantos dias faltan para pasar la tarea? El buffer es el unico indicador real.',
+   fb:'El porcentaje no revela si se llegara a tiempo. Solo el tiempo restante en el buffer dice la verdad.'},
+
+  {id:'q2',cap:'Cap. 17',adv:2,ra:1,badge:'Sala de Escape',bc:'#534AB7',bb:'#EEEDFE',
+   sc:'El buffer del A226 inicio con 9 semanas. Tres semanas despues de implementar el metodo, Fred debe reportar el estado real del proyecto al CEO.',
+   q:'¿Cual es el indicador correcto de salud del proyecto?',
+   opts:[
+     {l:'A',t:'Porcentaje de tareas completadas vs el total'},
+     {l:'B',t:'Dias de retraso acumulados por etapa'},
+     {l:'C',t:'Semanas restantes en el buffer vs semanas al inicio'},
+     {l:'D',t:'Tareas marcadas en rojo en el PERT'}
+   ],
+   ok:'C',
+   fo:'Correcto. Buffer de 9 semanas al inicio y 9 semanas despues = proyecto sano — los avances compensaron los retrasos.',
+   fb:'El buffer integra toda la variabilidad. Mientras no se consuma mas rapido que el avance, el proyecto esta protegido.'},
+
+  {id:'q3',cap:'Cap. 18',adv:2,ra:1,badge:'Shark Tank',bc:'#854F0B',bb:'#FAEEDA',
+   sc:'Proveedor critico necesita 8 semanas. Cada semana de retraso cuesta $300.000 en ventas. TechBuild quiere entrega en 5 semanas y el proveedor pide incentivo economico.',
+   q:'¿Hasta cuanto es racional pagar de mas segun el Cap. 18?',
+   opts:[
+     {l:'A',t:'Nada — nunca se paga mas del precio cotizado'},
+     {l:'B',t:'Exactamente $300.000, el costo de una sola semana'},
+     {l:'C',t:'Lo que sea sin calcular — el tiempo vale mas'},
+     {l:'D',t:'Hasta $900.000 adicionales (3 semanas x $300K recuperadas)'}
+   ],
+   ok:'D',
+   fo:'Perfecto. 3 semanas x $300K = $900K de dano evitado. Cualquier pago menor a eso es rentable.',
+   fb:'El calculo: semanas ahorradas x costo por semana = maximo racional. 3 x $300K = $900K.'},
+
+  {id:'q4',cap:'Cap. 18',adv:2,ra:1,badge:'Sala de Escape',bc:'#534AB7',bb:'#EEEDFE',
+   sc:'Roger exige al subcontratista: <em>"Firma que entregas el 15 de marzo o no hay trato."</em> El proveedor corta la llamada. Roger dice que es imposible negociar con ellos.',
+   q:'¿Cual es la estrategia correcta segun el Cap. 18?',
+   opts:[
+     {l:'A',t:'Escalar al CEO para que presione directamente al proveedor'},
+     {l:'B',t:'Avisos anticipados (10, 3 y 1 dia) + pago extra por plazo corto'},
+     {l:'C',t:'Buscar otro proveedor que acepte fechas fijas sin discutir'},
+     {l:'D',t:'Aceptar las 8 semanas y reducir el alcance del proyecto'}
+   ],
+   ok:'B',
+   fo:'Correcto. Fecha fija activa el sindrome del estudiante. Avisos anticipados + incentivo es la formula que funciona.',
+   fb:'Exigir fecha fija garantiza que el proveedor use todo el tiempo. Avisos + incentivo economico es la estrategia real.'},
+
+  {id:'q5',cap:'Cap. 19',adv:3,ra:1,badge:'Decision Ejecutiva',bc:'#085041',bb:'#E1F5EE',
+   sc:'TechBuild tiene 5 proyectos simultaneos. El Departamento de Arquitectura participa en todos y siempre esta saturado. Cada equipo reclama maxima prioridad. Ningun proyecto avanza bien.',
+   q:'¿Cual es el diagnostico correcto segun el Cap. 19?',
+   opts:[
+     {l:'A',t:'Arquitectura es el cuello de botella global — debe gestionarse como restriccion compartida del portafolio'},
+     {l:'B',t:'Cancelar 3 proyectos para reducir la carga total del departamento'},
+     {l:'C',t:'Dar independencia total a cada proyecto con su propio equipo'},
+     {l:'D',t:'Contratar mas personas en Arquitectura para absorber la demanda'}
+   ],
+   ok:'A',
+   fo:'Exacto. Gestionar proyectos independientes ignorando la restriccion global es el problema. Hay que subordinar todo al cuello de botella compartido.',
+   fb:'Contratar ayuda a largo plazo pero no resuelve la priorizacion. El recurso saturado es la restriccion de todo el portafolio.'},
+
+  {id:'q6',cap:'17-18-19',adv:3,ra:2,badge:'Reto Final',bc:'#0D1B3E',bb:'#E6F1FB',
+   sc:'Isaac Levy pide al equipo consultor explicar los 3 cambios fundamentales que implementaron en Genemodem y que produjeron resultados visibles en solo 3 semanas.',
+   q:'¿Cuales son los 3 cambios clave del metodo (Cap. 17)?',
+   opts:[
+     {l:'A',t:'Implementar PMO, software avanzado y standups diarios'},
+     {l:'B',t:'Penalizaciones por retraso y ranking de productividad del equipo'},
+     {l:'C',t:'Mas reuniones de seguimiento y mas control individual por etapa'},
+     {l:'D',t:'Reducir estimaciones al 50%, eliminar fechas por etapa, reportar tiempo restante'}
+   ],
+   ok:'D',
+   fo:'Perfecto. Los 3 cambios: reducir plazos a la mitad, eliminar fechas individuales y preguntar tiempo restante — no porcentaje completado.',
+   fb:'Los 3 cambios contraintuitivos: reducir plazos, sin fechas individuales, preguntar tiempo restante en lugar de % completado.'}
+];
+
+// Rescates — correctas: B, D, A, C, B, C
+var RS = {
+  q1:{q:'¿Por que el porcentaje completado es engañoso en Cadena Critica?',
+    opts:[{l:'A',t:'La gente siempre exagera el avance para quedar bien'},
+          {l:'B',t:'No captura si el proyecto llegara a tiempo — solo cuanto hay hecho'},
+          {l:'C',t:'Es dificil de calcular con precision en proyectos complejos'},
+          {l:'D',t:'Depende de la subjetividad de cada miembro del equipo'}],
+    ok:'B', fb:'El % dice cuanto se ha hecho, no si hay tiempo suficiente. El buffer si captura esa informacion.'},
+  q2:{q:'El buffer bajo de 9 a 7 semanas. ¿Que significa realmente?',
+    opts:[{l:'A',t:'El proyecto va muy mal — perdio 2 semanas criticas'},
+          {l:'B',t:'Hay que activar alarma roja con el CEO de inmediato'},
+          {l:'C',t:'El proyecto va bien — aun tiene 7 semanas de colchon'},
+          {l:'D',t:'Depende: consumo gradual proporcional al avance es normal; repentino es alarma'}],
+    ok:'D', fb:'Consumo gradual proporcional al avance es señal saludable. Solo es alarma si se consume mucho mas rapido que el avance.'},
+  q3:{q:'¿Por que el retraso de 1 mes puede costar mas de lo que parece a primera vista?',
+    opts:[{l:'A',t:'Porque parte de las ventas no se recuperan si la ventana competitiva se cierra'},
+          {l:'B',t:'Por el costo de las horas extra del equipo del proyecto'},
+          {l:'C',t:'Por las penalizaciones contractuales pactadas con el cliente'},
+          {l:'D',t:'Por el deterioro inevitable de la moral del equipo'}],
+    ok:'A', fb:'El dinero no solo se retrasa — parte se pierde si un competidor ocupa el espacio de mercado antes.'},
+  q4:{q:'¿Para que sirven exactamente los avisos anticipados de 10, 3 y 1 dia al proveedor?',
+    opts:[{l:'A',t:'Para presionarlo psicologicamente con recordatorios'},
+          {l:'B',t:'Para tener evidencia documental si incumple el contrato'},
+          {l:'C',t:'Para que pueda planificar su carga sin necesitar una fecha de inicio fija'},
+          {l:'D',t:'Para cumplir con los requisitos formales del contrato firmado'}],
+    ok:'C', fb:'La razon por la que el proveedor pide fecha fija es para planificar. Los avisos le dan eso, sin sindrome del estudiante.'},
+  q5:{q:'Cuando cada proyecto trata el recurso compartido como propio, ¿que ocurre en la realidad?',
+    opts:[{l:'A',t:'El recurso se vuelve mas eficiente gracias a la competencia entre proyectos'},
+          {l:'B',t:'Se crea multitarea forzada que ralentiza todos los proyectos al mismo tiempo'},
+          {l:'C',t:'Los proyectos mas importantes ganan prioridad de forma automatica'},
+          {l:'D',t:'El recurso aprende a trabajar mas rapido bajo presion constante'}],
+    ok:'B', fb:'Cuando todos reclaman maxima prioridad el recurso salta entre proyectos — multitarea que lentifica todo.'},
+  q6:{q:'¿Por que es clave NO asignar fechas de terminacion individuales por etapa?',
+    opts:[{l:'A',t:'Para simplificar la administracion general del proyecto'},
+          {l:'B',t:'Para que el equipo no se estrese con presiones de calendario'},
+          {l:'C',t:'La fecha fija activa el sindrome del estudiante: si hay 2 semanas, se usan las 2 semanas'},
+          {l:'D',t:'Porque de todas formas nadie cumple las fechas individuales comprometidas'}],
+    ok:'C', fb:'La fecha fija le dice exactamente hasta cuando puede esperar. Sin ella, la urgencia es real desde el primer dia.'}
+};
+
+// ═══════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════
+var G = {tid:null, pos:0, pts:0, qi:0, tmr:null, tl:0, rf:null};
+var GOAL = 11, TIME = 50;
+
+// ═══════════════════════════════════════
+// FIREBASE — guardar y escuchar
+// ═══════════════════════════════════════
+function fbSave(tid, data){
+  REF.child('equipos/t'+tid).set(Object.assign({}, data, {
+    id:tid, name:T[tid].n, role:T[tid].r,
+    color:T[tid].c, ts:Date.now()
+  })).catch(function(e){ console.warn('Firebase write error:', e); });
+}
+
+function fbListen(callback){
+  REF.child('equipos').on('value', function(snap){
+    callback(snap.val() || {});
+  }, function(err){
+    console.warn('Firebase read error:', err);
+    callback({});
+  });
+}
+
+function fbReset(){
+  REF.child('equipos').remove().catch(function(){});
+}
+
+// ═══════════════════════════════════════
+// TABLERO
+// ═══════════════════════════════════════
+function buildTrack(){
+  var el = document.getElementById('track');
+  if(!el) return;
+  el.innerHTML = '';
+  STEPS.slice(1, STEPS.length-1).forEach(function(s){
+    var ac = s.id === G.pos, dn = s.id < G.pos;
+    var d = document.createElement('div');
+    d.className = 'step'+(s.t==='m'?' ms':'')+(ac?' act':'')+(dn?' dn':'');
+    var nb = dn?'#0d2a10':(s.t==='m'?'#3a2a00':'#1e3a66');
+    var nc = dn?'#97C459':(s.t==='m'?'#F4A124':'#85B7EB');
+    d.innerHTML =
+      '<div class="snum" style="background:'+nb+';color:'+nc+'">'+(dn?'&#10003;':s.ic)+'</div>'+
+      '<div class="sinfo"><div class="sname">'+s.n+'</div><div class="sdesc">'+s.d+'</div></div>'+
+      (ac?'<div class="shere">AQUI</div>':'');
+    el.appendChild(d);
+  });
+  document.getElementById('g-pos').textContent = G.pos;
+  document.getElementById('g-pts').textContent = G.pts;
+}
+
+// ═══════════════════════════════════════
+// PREGUNTAS
+// ═══════════════════════════════════════
+function renderQ(){
+  var q = QS[G.qi % QS.length];
+  document.getElementById('qa').innerHTML =
+    '<div class="tw"><div class="tt"><span class="tll">Tiempo</span><span class="tnum" id="tc">'+TIME+'</span></div>'+
+    '<div class="tbar"><div class="tfil" id="tf" style="width:100%"></div></div></div>'+
+    '<div class="qcard">'+
+      '<span class="qbadge" style="background:'+q.bb+';color:'+q.bc+'">'+q.badge+' &middot; '+q.cap+'</span>'+
+      '<div class="qsc">'+q.sc+'</div>'+
+      '<div class="qq">'+q.q+'</div>'+
+      '<div class="opts" id="opts">'+
+        q.opts.map(function(o){
+          return '<button class="opt" onclick="pick(\''+o.l+'\')"><span class="ol">'+o.l+'</span>'+o.t+'</button>';
+        }).join('')+
+      '</div>'+
+      '<div class="fb" id="fb"></div>'+
+    '</div><div id="nxt"></div>';
+  startTmr();
+}
+
+function renderRescue(){
+  var r = RS[G.rf];
+  document.getElementById('qa').innerHTML =
+    '<div class="qcard">'+
+      '<div class="rh"><h3>PREGUNTA DE RESCATE</h3><p>Responde bien para avanzar al menos 1 paso</p></div>'+
+      '<div class="qq">'+r.q+'</div>'+
+      '<div class="opts" id="ropts">'+
+        r.opts.map(function(o){
+          return '<button class="opt" onclick="rpick(\''+o.l+'\')"><span class="ol">'+o.l+'</span>'+o.t+'</button>';
+        }).join('')+
+      '</div>'+
+      '<div class="fb" id="rfb"></div>'+
+    '</div><div id="rnxt"></div>';
+}
+
+// ═══════════════════════════════════════
+// LOGICA
+// ═══════════════════════════════════════
+function startTmr(){
+  G.tl = TIME; clearInterval(G.tmr);
+  G.tmr = setInterval(function(){
+    G.tl--;
+    var tc=document.getElementById('tc'), tf=document.getElementById('tf');
+    if(tc) tc.textContent = G.tl;
+    if(tf){ tf.style.width=Math.round((G.tl/TIME)*100)+'%'; if(G.tl<=12) tf.classList.add('red'); }
+    if(G.tl<=0){ clearInterval(G.tmr); tout(); }
+  },1000);
+}
+
+function tout(){
+  var q = QS[G.qi%QS.length];
+  rev('opts', q.ok);
+  var fb = document.getElementById('fb');
+  if(fb){ fb.classList.add('show','b'); fb.innerHTML='<strong>Tiempo agotado.</strong> '+q.fb; }
+  var nxt = document.getElementById('nxt');
+  if(nxt) nxt.innerHTML='<button class="bm" onclick="openR()">Pregunta de rescate &rarr;</button>';
+}
+
+function rev(cid, ok){
+  document.querySelectorAll('#'+cid+' .opt').forEach(function(o,i){
+    o.disabled=true;
+    if(['A','B','C','D'][i]===ok) o.classList.add('ok');
+  });
+}
+
+function pick(l){
+  clearInterval(G.tmr);
+  var q = QS[G.qi%QS.length];
+  document.querySelectorAll('#opts .opt').forEach(function(o,i){
+    o.disabled=true;
+    var c=['A','B','C','D'][i];
+    if(c===q.ok) o.classList.add('ok');
+    else if(c===l && l!==q.ok) o.classList.add('no');
+  });
+  var isOk = l===q.ok;
+  var fb=document.getElementById('fb'), nxt=document.getElementById('nxt');
+  if(isOk){
+    var bon = Math.round((G.tl/TIME)*30);
+    G.pts += 100+bon; G.pos = Math.min(G.pos+q.adv, GOAL);
+    buildTrack(); sync();
+    if(fb){ fb.classList.add('show','g'); fb.innerHTML='<strong>Correcto! +'+(100+bon)+' pts.</strong> Avanzas '+q.adv+' pasos. '+q.fo; }
+    if(G.pos>=GOAL){ setTimeout(victory, 1800); return; }
+    if(nxt) nxt.innerHTML='<button class="bm" onclick="nextQ()">Siguiente reto &rarr;</button>';
+  } else {
+    if(fb){ fb.classList.add('show','b'); fb.innerHTML='<strong>No exactamente.</strong> '+q.fb; }
+    if(nxt) nxt.innerHTML='<button class="bm" onclick="openR()">Pregunta de rescate &rarr;</button>';
+  }
+}
+
+function openR(){ G.rf=QS[G.qi%QS.length].id; renderRescue(); }
+
+function rpick(l){
+  var r = RS[G.rf];
+  document.querySelectorAll('#ropts .opt').forEach(function(o,i){
+    o.disabled=true;
+    var c=['A','B','C','D'][i];
+    if(c===r.ok) o.classList.add('ok');
+    else if(c===l && l!==r.ok) o.classList.add('no');
+  });
+  var isOk = l===r.ok;
+  var rfb=document.getElementById('rfb'), rnxt=document.getElementById('rnxt');
+  var q=QS[G.qi%QS.length];
+  if(isOk){
+    G.pts+=40; G.pos=Math.min(G.pos+q.ra, GOAL);
+    buildTrack(); sync();
+    if(rfb){ rfb.classList.add('show','g'); rfb.innerHTML='<strong>Rescate exitoso! +40 pts.</strong> Avanzas '+q.ra+' paso(s). '+r.fb; }
+    if(G.pos>=GOAL){ setTimeout(victory,1800); return; }
+  } else {
+    if(rfb){ rfb.classList.add('show','b'); rfb.innerHTML='<strong>Rescate fallido.</strong> Te quedas en paso '+G.pos+'. '+r.fb; }
+  }
+  if(rnxt) rnxt.innerHTML='<button class="bm" onclick="nextQ()">Continuar &rarr;</button>';
+}
+
+function nextQ(){ G.qi++; renderQ(); }
+
+function sync(){
+  if(!G.tid) return;
+  fbSave(G.tid, {pos:G.pos, pts:G.pts, qi:G.qi, finished:G.pos>=GOAL, fat:G.pos>=GOAL?Date.now():null});
+}
+
+function victory(){
+  var t = T[G.tid];
+  G.pos = GOAL; sync();
+  document.getElementById('w-nm').textContent  = t.n+' — '+t.r;
+  document.getElementById('w-nm').style.color  = t.c;
+  document.getElementById('w-code').textContent = t.code;
+  document.getElementById('w-msg').innerHTML =
+    '<strong>Mensaje de Isaac Levy:</strong> "'+t.n+' demostro dominar la Cadena Critica de principio a fin. TechBuild firma el contrato sin condiciones."<br><br>'+
+    '<strong>Puntuacion final: '+G.pts+' pts &middot; '+GOAL+' pasos completados</strong>';
+  goS('s-win');
+}
+
+// ═══════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════
+var fw = null;
+
+function initDash(){
+  goS('s-dashboard'); fw = null;
+  document.getElementById('dsync').textContent = 'Escuchando Firebase en tiempo real...';
+  document.getElementById('wb').classList.remove('show');
+
+  fbListen(function(data){
+    var now = new Date();
+    document.getElementById('dsync').textContent =
+      'Ultima actualizacion: '+pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds());
+
+    var teams = [];
+    for(var i=1;i<=7;i++){
+      var d = data['t'+i]||null;
+      teams.push({id:i, name:T[i].n, role:T[i].r, color:T[i].c,
+        pos:d?d.pos:0, pts:d?d.pts:0,
+        finished:d?!!d.finished:false, fat:d?d.fat:null, active:!!d});
+    }
+
+    var n = teams.filter(function(t){return t.active;}).length;
+    document.getElementById('dconn').innerHTML =
+      n>0
+      ? '<span class="conn-ok">&#9679; '+n+' equipo(s) conectado(s) y jugando</span>'
+      : '<span class="conn-no">&#9679; Esperando que los equipos entren...</span>';
+
+    // Detectar ganador
+    var won = teams.filter(function(t){return t.finished;})
+      .sort(function(a,b){return(a.fat||Infinity)-(b.fat||Infinity)});
+    if(won.length>0 && !fw){
+      fw = won[0];
+      document.getElementById('wb').classList.add('show');
+      var wn = document.getElementById('w-nm2');
+      wn.innerHTML = '&#9733; GANADOR: '+fw.name+' — '+fw.role;
+      wn.style.color = fw.color;
+      document.getElementById('w-det').textContent =
+        'Primer equipo en llegar a la meta &middot; '+fw.pts+' puntos &middot; Codigo: '+T[fw.id].code;
+    }
+
+    var sorted = [].concat(teams).sort(function(a,b){
+      return b.pos!==a.pos ? b.pos-a.pos : b.pts-a.pts;
+    });
+
+    // Tarjetas
+    document.getElementById('tdash').innerHTML = teams.map(function(t){
+      var pct  = Math.round((t.pos/GOAL)*100);
+      var rank = sorted.findIndex(function(s){return s.id===t.id;})+1;
+      var isWin = fw && t.id===fw.id;
+      var cls  = 'tc'+(isWin?' fin':(rank===1&&t.pos>0?' lead':''));
+      var tagC, tagT;
+      if(isWin)                      { tagC='tag tag-win'; tagT='&#9733; GANADOR'; }
+      else if(t.finished)            { tagC='tag tag-f';   tagT='&#10003; Meta alcanzada'; }
+      else if(t.active && t.pos>0)   { tagC='tag tag-p';   tagT='Jugando &mdash; paso '+t.pos; }
+      else if(t.active)              { tagC='tag tag-p';   tagT='Conectado'; }
+      else                           { tagC='tag tag-w';   tagT='Esperando...'; }
+      return '<div class="'+cls+'">'+
+        '<div class="tc-top">'+
+          '<div class="tc-av" style="background:'+t.color+'22;color:'+t.color+'">'+ICONS[t.id-1]+'</div>'+
+          '<div><div class="tc-nm">'+t.name+'</div><div class="tc-rl">'+t.role+'</div></div>'+
+        '</div>'+
+        '<div class="tc-st">'+
+          '<div class="tc-s"><div class="tc-sl">Paso</div><div class="tc-sv" style="color:'+t.color+'">'+t.pos+'/'+GOAL+'</div></div>'+
+          '<div class="tc-s"><div class="tc-sl">Puntos</div><div class="tc-sv">'+t.pts+'</div></div>'+
+          '<div class="tc-s"><div class="tc-sl">Posicion</div><div class="tc-sv">#'+rank+'</div></div>'+
+        '</div>'+
+        '<div class="pb"><div class="pf" style="width:'+pct+'%;background:'+t.color+'"></div></div>'+
+        '<div class="pl">'+pct+'% del recorrido completado</div>'+
+        '<span class="'+tagC+'">'+tagT+'</span>'+
+      '</div>';
+    }).join('');
+
+    // Leaderboard
+    var mc = ['#F4A124','#8aabcc','#BA7517'];
+    document.getElementById('lboard').innerHTML = sorted.map(function(t,i){
+      return '<div class="lr">'+
+        '<div class="lp" style="background:'+(i<3?mc[i]+'30':'#1e3a66')+';color:'+(i<3?mc[i]:'#8aabcc')+'">'+(i+1)+'</div>'+
+        '<div style="font-size:15px;width:24px;text-align:center">'+ICONS[t.id-1]+'</div>'+
+        '<div class="li"><div class="ln" style="color:'+t.color+'">'+t.name+'</div><div class="lro">'+t.role+'</div></div>'+
+        '<div class="lr-r"><div class="lpts">'+t.pts+' pts</div><div class="lstp">paso '+t.pos+'</div></div>'+
+      '</div>';
+    }).join('');
+  });
+}
+
+function resetAll(){
+  if(!confirm('¿Reiniciar el progreso de todos los equipos?')) return;
+  fbReset(); fw=null;
+  document.getElementById('wb').classList.remove('show');
+}
+
+function pad(n){ return String(n).padStart(2,'0'); }
+
+// ═══════════════════════════════════════
+// NAVEGACION
+// ═══════════════════════════════════════
+function goS(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function selTeam(id){
+  G.tid=id; G.pos=0; G.pts=0; G.qi=0;
+  var t=T[id];
+  document.getElementById('g-nm').textContent=t.n;
+  document.getElementById('g-nm').style.color=t.c;
+  document.getElementById('g-rl').textContent=t.r;
+  sync(); buildTrack(); renderQ();
+  goS('s-game');
+}
+
+// Render botones de equipo
+(function(){
+  var cs=['#E24B4A','#378ADD','#639922','#BA7517','#7F77DD','#1D9E75','#D4537E'];
+  document.getElementById('tgrid').innerHTML = Object.keys(T).map(function(k,i){
+    return '<button class="team-btn" onclick="selTeam('+k+')" style="border-color:'+cs[i]+'50">'+
+      '<div class="ti">'+ICONS[i]+'</div>'+
+      '<div class="tnm" style="color:'+cs[i]+'">'+T[k].n+'</div>'+
+      '<div class="trl">'+T[k].r+'</div></button>';
+  }).join('');
+})();
+</script>
+</body>
+</html>
